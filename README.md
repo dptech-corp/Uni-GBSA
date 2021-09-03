@@ -1,0 +1,2 @@
+# gmxMMPBSA
+auto MMPBSA
