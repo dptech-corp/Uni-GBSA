@@ -7,7 +7,7 @@ in a reasonable amount of time. Feel free to change the parameters
 according to what is better for your system.
 
 &general
-startframe={startFrame}, endframe={endFrame}, verbose=1, interval={interval}, temperature={temperature}
+startframe={startFrame}, endframe={endFrame}, verbose=2, interval={interval}, temperature={temperature}
 protein_forcefield="oldff/leaprc.ff99SB",
 /
 
