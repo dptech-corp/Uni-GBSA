@@ -1,0 +1,238 @@
+Reading parm file (COM.prmtop)
+title:
+default_name                                                                    
+	mm_options:  e_debug=2
+	mm_options:  gb=2
+	mm_options:  rgbmax=25.000000
+	mm_options:  gbsa=0
+	mm_options:  surften=0.007200
+	mm_options:  cut=999.000000
+	mm_options:  epsext=78.300000
+	mm_options:  kappa=0.127315
+Processing ASCII trajectory (_GMXMMPBSA_complex.mdcrd.0)
+
+Processing frame 1
+      iter    Total       bad      vdW     elect   nonpolar   genBorn      frms
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   899.314
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8353.319
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1902.892
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16793.319
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3605.500
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ff:     0  -7888.74   5160.34  -1003.58  -8440.00      0.00  -3605.50  1.75e+01
+ BOND    =      695.8858  ANGLE   =     1935.8120  DIHED      =     2528.6428
+ VDWAALS =    -1902.8918  EEL     =   -16793.3190  EGB        =    -3605.4997
+ 1-4 VDW =      899.3135  1-4 EEL =     8353.3195  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 2
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   856.838
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8366.437
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1909.295
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16781.640
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3604.764
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      738.5252  ANGLE   =     1884.7779  DIHED      =     2494.6091
+ VDWAALS =    -1909.2950  EEL     =   -16781.6401  EGB        =    -3604.7638
+ 1-4 VDW =      856.8378  1-4 EEL =     8366.4366  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 3
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   866.793
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8330.620
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1911.029
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16751.555
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3608.876
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      711.8312  ANGLE   =     1957.3169  DIHED      =     2492.3390
+ VDWAALS =    -1911.0290  EEL     =   -16751.5554  EGB        =    -3608.8761
+ 1-4 VDW =      866.7926  1-4 EEL =     8330.6199  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 4
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   868.488
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8305.544
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1894.467
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16750.907
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3591.231
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      766.3233  ANGLE   =     1813.0891  DIHED      =     2504.4961
+ VDWAALS =    -1894.4673  EEL     =   -16750.9070  EGB        =    -3591.2310
+ 1-4 VDW =      868.4876  1-4 EEL =     8305.5437  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 5
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   875.107
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8415.108
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1881.195
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16852.197
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3596.413
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      753.7199  ANGLE   =     1893.8947  DIHED      =     2505.2987
+ VDWAALS =    -1881.1948  EEL     =   -16852.1971  EGB        =    -3596.4129
+ 1-4 VDW =      875.1071  1-4 EEL =     8415.1078  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 6
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   876.399
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8362.689
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1922.533
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16756.126
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3627.796
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      679.6605  ANGLE   =     1894.3650  DIHED      =     2496.1289
+ VDWAALS =    -1922.5325  EEL     =   -16756.1257  EGB        =    -3627.7962
+ 1-4 VDW =      876.3993  1-4 EEL =     8362.6886  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 7
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   847.615
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8276.597
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1912.920
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16692.543
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3627.076
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      752.5320  ANGLE   =     1899.8910  DIHED      =     2561.7997
+ VDWAALS =    -1912.9198  EEL     =   -16692.5428  EGB        =    -3627.0761
+ 1-4 VDW =      847.6146  1-4 EEL =     8276.5974  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 8
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   888.550
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8335.717
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1902.375
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16802.419
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3573.584
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      706.8533  ANGLE   =     1882.6785  DIHED      =     2512.8417
+ VDWAALS =    -1902.3750  EEL     =   -16802.4191  EGB        =    -3573.5843
+ 1-4 VDW =      888.5501  1-4 EEL =     8335.7174  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 9
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   855.664
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8310.637
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1915.827
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16770.376
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3581.155
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      736.1013  ANGLE   =     1890.7526  DIHED      =     2526.6667
+ VDWAALS =    -1915.8273  EEL     =   -16770.3760  EGB        =    -3581.1551
+ 1-4 VDW =      855.6635  1-4 EEL =     8310.6366  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 10
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   890.838
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8308.815
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1893.573
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16699.614
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3657.115
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      756.4529  ANGLE   =     1904.7529  DIHED      =     2514.7714
+ VDWAALS =    -1893.5735  EEL     =   -16699.6145  EGB        =    -3657.1149
+ 1-4 VDW =      890.8376  1-4 EEL =     8308.8146  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 11
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   889.151
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8397.687
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1900.488
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16799.909
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3630.463
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ff:    10  -7923.38   5120.64  -1011.34  -8402.22      0.00  -3630.46  1.77e+01
+ BOND    =      722.6772  ANGLE   =     1873.1371  DIHED      =     2524.8257
+ VDWAALS =    -1900.4880  EEL     =   -16799.9090  EGB        =    -3630.4635
+ 1-4 VDW =      889.1514  1-4 EEL =     8397.6868  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 12
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   880.865
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8406.790
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1890.491
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16800.583
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3627.011
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      750.6856  ANGLE   =     1861.6577  DIHED      =     2511.7687
+ VDWAALS =    -1890.4907  EEL     =   -16800.5829  EGB        =    -3627.0110
+ 1-4 VDW =      880.8652  1-4 EEL =     8406.7897  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 13
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   879.568
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8352.793
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1896.782
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16807.618
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3575.755
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      742.1220  ANGLE   =     1892.2553  DIHED      =     2495.8945
+ VDWAALS =    -1896.7820  EEL     =   -16807.6185  EGB        =    -3575.7549
+ 1-4 VDW =      879.5680  1-4 EEL =     8352.7926  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 14
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   881.970
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8381.802
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1920.746
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16834.332
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3577.014
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      735.9531  ANGLE   =     1842.9641  DIHED      =     2501.6739
+ VDWAALS =    -1920.7456  EEL     =   -16834.3317  EGB        =    -3577.0140
+ 1-4 VDW =      881.9705  1-4 EEL =     8381.8020  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 15
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   881.532
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8291.241
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1900.483
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16755.286
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3610.333
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      708.0836  ANGLE   =     1884.4853  DIHED      =     2544.0904
+ VDWAALS =    -1900.4833  EEL     =   -16755.2863  EGB        =    -3610.3329
+ 1-4 VDW =      881.5316  1-4 EEL =     8291.2414  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 16
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   861.218
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8321.946
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1915.526
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16791.784
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3593.309
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      717.9160  ANGLE   =     1883.5224  DIHED      =     2506.1703
+ VDWAALS =    -1915.5261  EEL     =   -16791.7842  EGB        =    -3593.3085
+ 1-4 VDW =      861.2180  1-4 EEL =     8321.9459  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+Processing frame 17
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2675) enb14 -->   883.661
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2676) eel14 -->  8385.752
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2734) enb --> -1921.802
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2735) eel --> -16786.450
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2736) e_gb --> -3628.777
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2737) esurf -->     0.000
+/home/conda/feedstock_root/build_artifacts/ambertools_1629099709407/work/AmberTools/src/sff/eff.c(2738) evdwnp -->     0.000
+ BOND    =      699.7721  ANGLE   =     1879.0098  DIHED      =     2526.5394
+ VDWAALS =    -1921.8018  EEL     =   -16786.4505  EGB        =    -3628.7772
+ 1-4 VDW =      883.6614  1-4 EEL =     8385.7521  RESTRAINT  =        0.0000
+ ESURF   =        0.0000
+
+MM/GBSA processing done!

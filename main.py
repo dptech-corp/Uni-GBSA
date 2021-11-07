@@ -1,17 +1,26 @@
-from GMXMMPBSA.commandlineparser import index, topology
-from groups import gmx_index_group
+
+import os
 import sys
-from os.path import split
-import logging
 import shlex
+import logging
+import argparse
+import numpy as np
+from os.path import split
 
 
-from parameters import generate_input_file
+try:
+    from .lib.prepare import pdb2pqr
+    from .lib.parameters import generate_input_file
+    from .lib.groups import detect_group, gmx_index_group, print_group, select_group
+except:
+    from lib.prepare import pdb2pqr
+    from lib.parameters import generate_input_file
+    from lib.groups import detect_group, gmx_index_group, print_group, select_group
 
 try:
     from GMXMMPBSA.exceptions import InputError, CommandlineError, GMXMMPBSA_WARNING
     from GMXMMPBSA.infofile import InfoFile
-    from GMXMMPBSA import main
+    from GMXMMPBSA import main as pbsaMain
     from GMXMMPBSA.commandlineparser import anaparser, testparser
 except ImportError:
     import os
@@ -20,6 +29,7 @@ except ImportError:
                       'you have sourced %s/amber.sh (if you are using sh/ksh/'
                       'bash/zsh) or %s/amber.csh (if you are using csh/tcsh)' %
                       (amberhome, amberhome))
+
 def gmxmmpbsa(argString: str):
     argv = shlex.split(argString)
     logging.basicConfig(
@@ -43,10 +53,10 @@ def gmxmmpbsa(argString: str):
         from GMXMMPBSA.fake_mpi import MPI
         args = argv
     # Set up error/signal handlers
-    main.setup_run()
+    pbsaMain.setup_run()
 
     # Instantiate the main MMPBSA_App
-    app = main.MMPBSA_App(MPI)
+    app = pbsaMain.MMPBSA_App(MPI)
 
     # Read the command-line arguments
     try:
@@ -94,54 +104,116 @@ def gmxmmpbsa(argString: str):
     app.write_final_outputs()
     app.finalize()
 
-def mmpbsa_pdb():
-    pdbfile = 'test_prep.pdb'
+def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
+    pdbfile = os.path.abspath(pdbfile)
+    pwd = os.getcwd()
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    os.chdir(outdir)
+    if prep:
+        outfile = os.path.split(pdbfile)[-1][:-4] + "_prep.pdb"
+        pdb2pqr(pdbfile, outfile)
+        pdbfile = outfile
     indexFile = 'index.ndx'
-    gmx_index_group(pdbfile, indexFile=indexFile)
+    gmx_index_group(pdbfile, selectedGroup=groupIDs, indexFile=indexFile)
     pbsaFile = 'mmpbsa.in'
     generate_input_file(outfile=pbsaFile)
-    receptorIndex, ligandIndex = 1,2
+    select_group(pdbfile, [groupIDs[1]], 'ligand.pdb')
+    cmd = 'antechamber -i {input} -fi pdb -o {output} -fo mol2 -c gas'.format(input='ligand.pdb', output='ligand.mol2')
+    RC = os.system(cmd)
+    if RC != 0:
+        raise Exception('ERROR run command %s'%cmd)
+    receptorIndex, ligandIndex = groupIDs + 1
     parasDict = {
         "pbsaFile" : pbsaFile,
         "topFile"  : pdbfile,
         'indexFile': indexFile,
         'receptorIndex': receptorIndex,
         'ligandIndex': ligandIndex,
-        'trajFile' : pdbfile
+        'trajFile' : pdbfile,
+        'ligandmol2':'ligand.mol2'
     }
-    argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui'.format(**parasDict)
-
+    argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
+    print(argString)
     gmxmmpbsa(argString)
+    if not DEBUG:
+        pdbname = os.path.split(pdbfile)[-1][:-4]
+        cmd = 'rm _GMXMMPBSA* COM* ANTECHAMBER* gmx_MMPBSA.log leap.log index.ndx ligand* LIG* REC* reference* %s_*' % pdbname
+        print('Clean output')
+        RC = os.system(cmd)
+        if RC != 0:
+            raise Exception('ERROR run command %s'%cmd)
+    os.chdir(pwd)
 
-def mmbpsa_traj():
-    tprfile = 'examples/Protein_ligand/ST/com.tpr'
-    trajfile = 'examples/Protein_ligand/ST/com_traj.xtc'
+def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, DEBUG=False):
+    tprfile = os.path.abspath(tprfile)
+    trajfile = os.path.abspath(trajfile)
+    pwd = os.getcwd()
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    os.chdir(outdir)
+    indexFile = 'index.ndx'
+    gmx_index_group(tprfile, selectedGroup=groupIDs, indexFile=indexFile)
+    pbsaFile = 'mmpbsa.in'
+    generate_input_file(outfile=pbsaFile)
+    select_group(tprfile, [groupIDs[1]], 'ligand.pdb', trajfile)
+    cmd = 'antechamber -i {input} -fi pdb -o {output} -fo mol2 -c gas'.format(input='ligand.pdb', output='ligand.mol2')
+    RC = os.system(cmd)
+    if RC != 0:
+        raise Exception('ERROR run command %s'%cmd)
+    receptorIndex, ligandIndex = groupIDs + 1
+    parasDict = {
+        "pbsaFile" : pbsaFile,
+        "topFile"  : tprfile,
+        'indexFile': indexFile,
+        'receptorIndex': receptorIndex,
+        'ligandIndex': ligandIndex,
+        'trajFile' : trajfile,
+        'ligandmol2':'ligand.mol2'
+    }
+    argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
+    print(argString)
+    gmxmmpbsa(argString)
+    if not DEBUG:
+        pdbname = os.path.split(tprfile)[-1][:-4]
+        cmd = 'rm _GMXMMPBSA* COM* ANTECHAMBER* gmx_MMPBSA.log leap.log index.ndx ligand* LIG* REC* reference* %s_*' % pdbname
+        print('Clean output')
+        RC = os.system(cmd)
+        if RC != 0:
+            raise Exception('ERROR run command %s'%cmd)
+    os.chdir(pwd)
 
+def main():
+    parser = argparse.ArgumentParser(description='Free energy calcaulated by MMPBSA method.')
+    parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file to calculate the free energy.', required=True)
+    parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
+    parser.add_argument('-o', dest='OUTP', help='Output floder to save results.', default=None)
+    parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
 
-
-def test_group_select():
-    from groups import detect_group, select_group, print_group, gmx_index_group
-    from prepare import pdb2pqr
-    pdbfile = './example/2fvy.pdb'
-    pdbfile = '../example/1ycr.pdb'
-    pdbfile = '../com_traj.pdb'
-    
+    args = parser.parse_args()
+    print(args)
+    exit(0)
+    pdbfile, trajfile, outdir, debug = args.INP, args.TRAJ, args.OUTP, args.DEBUG
+    doc = 'ERROR: trajfile reuired for input a tpr file.'
+    ext = pdbfile.split('.')[-1]
+    if ext=='tpr' and trajfile is None:
+        print(doc)
+    ## 1 Select Groups
     groups = detect_group(pdbfile)
+    print('='*80)
+    print("Group list: %s"%pdbfile)
     print_group(groups)
-    select_group(pdbfile, [3,4], outfile='test.pdb')
-    
-    outfile = 'test_prep.pdb'
-    pdb2pqr('test.pdb', outfile)
-    gmx_index_group(outfile)
-
-
-def gen_index():
-    pdbfile = 'test_out.pdb'
-    gmx_index_group(pdbfile)
+    inputstr = input('\nPlease select to group as receptor and ligand(eg 1,2):')
+    try:
+        groupIDs = np.array(list(map(int, inputstr.split(',')))) - 1
+    except:
+        raise Exception('ERROR: You must input as 1,2!')
+    ## 
+    if trajfile:
+        mmbpsa_traj(pdbfile, trajfile, groupIDs, outdir, DEBUG=debug)
+    else:
+        mmpbsa_pdb(pdbfile, groupIDs, outdir, DEBUG=debug)
 
 if __name__ == "__main__":
-    #print(sys.argv)
-    #gmxmmpbsa()
-    test_group_select()
-    #gen_index()
-    #mmpbsa_pdb()
+    main()
+    
