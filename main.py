@@ -30,6 +30,53 @@ except ImportError:
                       'bash/zsh) or %s/amber.csh (if you are using csh/tcsh)' %
                       (amberhome, amberhome))
 
+def finalize(app):
+    """ We are done. Finish up timers and print out timing info """
+    app.timer.done()
+    if not app.master:
+        app.MPI.Finalize()
+        return 0
+    app.stdout.write('\nTiming:\n')
+    app.timer.print_('setup_gmx', app.stdout)
+    app.timer.print_('setup', app.stdout)
+    if not app.FILES.rewrite_output:
+        app.timer.print_('cpptraj', app.stdout)
+        if app.INPUT['alarun']:
+            app.timer.print_('muttraj', app.stdout)
+        app.timer.print_('calc', app.stdout)
+        app.stdout.write('\n')
+        if app.INPUT['gbrun']:
+            app.timer.print_('gb', app.stdout)
+        if app.INPUT['pbrun']:
+            app.timer.print_('pb', app.stdout)
+        if app.INPUT['nmoderun']:
+            app.timer.print_('nmode', app.stdout)
+        if app.INPUT['qh_entropy']:
+            app.timer.print_('qh', app.stdout)
+        app.stdout.write('\n')
+    app.timer.print_('output', app.stdout)
+    app.timer.print_('global', app.stdout)
+    app.remove(app.INPUT['keep_files'])
+    logging.info('\n\nThank you for using gmx_MMPBSA. Please cite us if you publish this work with this '
+                 'reference:\n    Mario S. Valdés Tresanco, Mario E. Valdes-Tresanco, Pedro A. Valiente, & '
+                 'Ernesto Moreno Frías \n    gmx_MMPBSA (Version v1.4.2). '
+                 'Zenodo. http://doi.org/10.5281/zenodo.4569307'
+                 '\n\nAlso consider citing MMPBSA.py\n    Miller III, B. R., McGee Jr., '
+                 'T. D., Swails, J. M. Homeyer, N. Gohlke, H. and Roitberg, A. E.\n    J. Chem. Theory Comput., '
+                 '2012, 8 (9) pp 3314-3321\n')
+    app.MPI.Finalize()
+    end = 0
+    if app.FILES.gui:
+        import subprocess
+        logging.info('Opening gmx_MMPBSA_ana to analyze results...\n')
+        g = subprocess.Popen(['gmx_MMPBSA_ana', '-f', app.FILES.prefix + 'info'])
+        if g.wait():
+            end = 1
+    if end:
+        logging.error('Unable to start gmx_MMPBSA_ana...')
+    logging.info('Finalized...')
+    return end
+
 def gmxmmpbsa(argString: str):
     argv = shlex.split(argString)
     logging.basicConfig(
@@ -69,7 +116,7 @@ def gmxmmpbsa(argString: str):
     if app.FILES.clean:
         sys.stdout.write('Cleaning temporary files and quitting.\n')
         app.remove(0)
-        sys.exit(0)
+        return 0
 
     # See if we wanted to print out our input file options
     if app.FILES.infilehelp:
@@ -102,7 +149,11 @@ def gmxmmpbsa(argString: str):
     # Now we parse the output, print, and finish
     app.parse_output_files()
     app.write_final_outputs()
-    app.finalize()
+    #app.finalize()
+    exitCode = finalize(app)
+    if exitCode != 0:
+        raise Exception('ERROR finalize the run with exit code %d'%exitCode)
+
 
 def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
     pdbfile = os.path.abspath(pdbfile)
@@ -111,7 +162,7 @@ def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
         os.mkdir(outdir)
     os.chdir(outdir)
     if prep:
-        outfile = os.path.split(pdbfile)[-1][:-4] + "_prep.pdb"
+        outfile = os.path.split(pdbfile)[-1]#[:-4] + "_prep.pdb"
         pdb2pqr(pdbfile, outfile)
         pdbfile = outfile
     indexFile = 'index.ndx'
@@ -123,7 +174,7 @@ def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
     RC = os.system(cmd)
     if RC != 0:
         raise Exception('ERROR run command %s'%cmd)
-    receptorIndex, ligandIndex = groupIDs + 1
+    receptorIndex, ligandIndex = 1,2
     parasDict = {
         "pbsaFile" : pbsaFile,
         "topFile"  : pdbfile,
@@ -131,14 +182,16 @@ def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
         'receptorIndex': receptorIndex,
         'ligandIndex': ligandIndex,
         'trajFile' : pdbfile,
-        'ligandmol2':'ligand.mol2'
+        'ligandmol2':'ligand.mol2',
     }
     argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
+    if not DEBUG:
+        argString += ' --clean'
     print(argString)
     gmxmmpbsa(argString)
     if not DEBUG:
         pdbname = os.path.split(pdbfile)[-1][:-4]
-        cmd = 'rm _GMXMMPBSA* COM* ANTECHAMBER* gmx_MMPBSA.log leap.log index.ndx ligand* LIG* REC* reference* %s_*' % pdbname
+        cmd = 'rm ANTECHAMBER* gmx_MMPBSA.log index.ndx ligand* ATOMTYPE* %s* COM* leap.log reference.frc LIG* REC*' % pdbname
         print('Clean output')
         RC = os.system(cmd)
         if RC != 0:
@@ -161,7 +214,7 @@ def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, DEBUG=False):
     RC = os.system(cmd)
     if RC != 0:
         raise Exception('ERROR run command %s'%cmd)
-    receptorIndex, ligandIndex = groupIDs + 1
+    receptorIndex, ligandIndex = 1,2
     parasDict = {
         "pbsaFile" : pbsaFile,
         "topFile"  : tprfile,
@@ -169,14 +222,16 @@ def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, DEBUG=False):
         'receptorIndex': receptorIndex,
         'ligandIndex': ligandIndex,
         'trajFile' : trajfile,
-        'ligandmol2':'ligand.mol2'
+        'ligandmol2':'ligand.mol2',
     }
     argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
+    if not DEBUG:
+        argString += ' --clean'
     print(argString)
     gmxmmpbsa(argString)
     if not DEBUG:
         pdbname = os.path.split(tprfile)[-1][:-4]
-        cmd = 'rm _GMXMMPBSA* COM* ANTECHAMBER* gmx_MMPBSA.log leap.log index.ndx ligand* LIG* REC* reference* %s_*' % pdbname
+        cmd = 'rm ANTECHAMBER* gmx_MMPBSA.log index.ndx ligand* ATOMTYPE* %s* COM* leap.log reference.frc LIG* REC*' % pdbname
         print('Clean output')
         RC = os.system(cmd)
         if RC != 0:
@@ -192,7 +247,7 @@ def main():
 
     args = parser.parse_args()
     print(args)
-    exit(0)
+    #exit(0)
     pdbfile, trajfile, outdir, debug = args.INP, args.TRAJ, args.OUTP, args.DEBUG
     doc = 'ERROR: trajfile reuired for input a tpr file.'
     ext = pdbfile.split('.')[-1]
