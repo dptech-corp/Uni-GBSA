@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from os.path import split
 
+import MDAnalysis as mda
 
 try:
     from .lib.prepare import pdb2pqr
@@ -154,13 +155,20 @@ def gmxmmpbsa(argString: str):
     if exitCode != 0:
         raise Exception('ERROR finalize the run with exit code %d'%exitCode)
 
+def obtain_number_of_traj_frame(topfile, trajfile):
+    u = mda.Universe(topfile)
+    u.load_new(trajfile)
+    return len(u.trajectory)
 
 def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
     pdbfile = os.path.abspath(pdbfile)
     pwd = os.getcwd()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    os.chdir(outdir)
+    rundir = os.path.join(outdir, 'mmpbsa')
+    if not os.path.exists(rundir):
+        os.mkdir(rundir)
+    os.chdir(rundir)
     if prep:
         outfile = os.path.split(pdbfile)[-1]#[:-4] + "_prep.pdb"
         pdb2pqr(pdbfile, outfile)
@@ -185,30 +193,36 @@ def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
         'ligandmol2':'ligand.mol2',
     }
     argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
-    if not DEBUG:
-        argString += ' --clean'
     print(argString)
     gmxmmpbsa(argString)
+    outfile = 'FINAL_RESULTS_MMPBSA.dat'
+    if not os.path.exists(outfile):
+        raise Exception('ERROR: Not found the result file %s'%outfile)
+    cmd = 'cp %s ../'%(outfile)
+    os.system(cmd)
+    os.chdir(pwd)
     if not DEBUG:
-        pdbname = os.path.split(pdbfile)[-1][:-4]
-        cmd = 'rm ANTECHAMBER* gmx_MMPBSA.log index.ndx ligand* ATOMTYPE* %s* COM* leap.log reference.frc LIG* REC*' % pdbname
+        cmd = 'rm -rf %s'% rundir
         print('Clean output')
         RC = os.system(cmd)
         if RC != 0:
             raise Exception('ERROR run command %s'%cmd)
-    os.chdir(pwd)
 
 def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, DEBUG=False):
     tprfile = os.path.abspath(tprfile)
     trajfile = os.path.abspath(trajfile)
+    nFrame = obtain_number_of_traj_frame(tprfile, trajfile)
     pwd = os.getcwd()
     if not os.path.exists(outdir):
         os.mkdir(outdir)
-    os.chdir(outdir)
+    rundir = os.path.join(outdir, 'mmpbsa')
+    if not os.path.exists(rundir):
+        os.mkdir(rundir)
+    os.chdir(rundir)
     indexFile = 'index.ndx'
     gmx_index_group(tprfile, selectedGroup=groupIDs, indexFile=indexFile)
     pbsaFile = 'mmpbsa.in'
-    generate_input_file(outfile=pbsaFile)
+    generate_input_file(outfile=pbsaFile, endFrame=nFrame)
     select_group(tprfile, [groupIDs[1]], 'ligand.pdb', trajfile)
     cmd = 'antechamber -i {input} -fi pdb -o {output} -fo mol2 -c gas'.format(input='ligand.pdb', output='ligand.mol2')
     RC = os.system(cmd)
@@ -225,18 +239,20 @@ def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, DEBUG=False):
         'ligandmol2':'ligand.mol2',
     }
     argString = '_ -O -i {pbsaFile} -cs {topFile} -ci {indexFile} -cg {receptorIndex} {ligandIndex} -ct {trajFile} -nogui -lm {ligandmol2}'.format(**parasDict)
-    if not DEBUG:
-        argString += ' --clean'
     print(argString)
     gmxmmpbsa(argString)
+    outfile = 'FINAL_RESULTS_MMPBSA.dat'
+    if not os.path.exists(outfile):
+        raise Exception('ERROR: Not found the result file %s'%outfile)
+    cmd = 'cp %s ../'%(outfile)
+    os.system(cmd)
+    os.chdir(pwd)
     if not DEBUG:
-        pdbname = os.path.split(tprfile)[-1][:-4]
-        cmd = 'rm ANTECHAMBER* gmx_MMPBSA.log index.ndx ligand* ATOMTYPE* %s* COM* leap.log reference.frc LIG* REC*' % pdbname
+        cmd = 'rm -rf %s'% rundir
         print('Clean output')
         RC = os.system(cmd)
         if RC != 0:
             raise Exception('ERROR run command %s'%cmd)
-    os.chdir(pwd)
 
 def main():
     parser = argparse.ArgumentParser(description='Free energy calcaulated by MMPBSA method.')
