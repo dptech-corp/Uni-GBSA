@@ -1,0 +1,178 @@
+# You can alter the variables below
+INPUT['debug_printlevel'] = 0
+INPUT['verbose'] = 1
+INPUT['csv_format'] = 1
+INPUT['dec_verbose'] = 0
+INPUT['temperature'] = 300.0
+INPUT['exp_ki'] = 0.0
+INPUT['sys_name'] = ''
+INPUT['ie_segment'] = 25
+INPUT['interaction_entropy'] = 0
+#
+# You can alter the variables below with care
+#
+# These variables are deprecated and will be remove in next versions
+INPUT['entropy_temp'] = 298.15
+INPUT['entropy_seg'] = 25
+INPUT['entropy'] = 0
+INPUT['protein_forcefield'] = 'oldff/leaprc.ff99SB'
+INPUT['ligand_forcefield'] = 'leaprc.gaff'
+#
+# MODIFY NOTHING BELOW HERE, OR GET WHAT YOU DESERVE
+INPUT['assign_chainID'] = 0
+INPUT['endframe'] = 1
+INPUT['qh_entropy'] = 0
+INPUT['full_traj'] = 0
+INPUT['gmx_path'] = ''
+INPUT['interval'] = 1
+INPUT['ions_parameters'] = 1
+INPUT['keep_files'] = 2
+INPUT['forcefields'] = 'oldff/leaprc.ff99SB,leaprc.gaff'
+INPUT['netcdf'] = ''
+INPUT['overwrite_data'] = 0
+INPUT['PBRadii'] = 3
+INPUT['solvated_trajectory'] = 1
+INPUT['startframe'] = 1
+INPUT['strip_mask'] = ':WAT,Cl*,CIO,Cs+,IB,K*,Li+,MG*,Na+,Rb+,CS,RB,NA,F,CL'
+INPUT['use_sander'] = 0
+INPUT['gbrun'] = True
+INPUT['ifqnt'] = 0
+INPUT['igb'] = 2
+INPUT['intdiel'] = 1.0
+INPUT['qm_theory'] = ''
+INPUT['qm_residues'] = ''
+INPUT['qmcharge_com'] = 0
+INPUT['qmcharge_lig'] = 0
+INPUT['qmcharge_rec'] = 0
+INPUT['qmcut'] = 9999.0
+INPUT['saltcon'] = 0.15
+INPUT['surfoff'] = 0.0
+INPUT['surften'] = 0.0072
+INPUT['molsurf'] = 0
+INPUT['msoffset'] = 0.0
+INPUT['probe'] = 1.4
+INPUT['pbrun'] = False
+INPUT['cavity_offset'] = -0.5692
+INPUT['cavity_surften'] = 0.0378
+INPUT['exdi'] = 80.0
+INPUT['emem'] = 1.0
+INPUT['memopt'] = 0
+INPUT['memoptzero'] = 0
+INPUT['sasopt'] = 0
+INPUT['solvopt'] = 2
+INPUT['mthick'] = 40.0
+INPUT['mctrdz'] = 0.0
+INPUT['maxarcdot'] = 1500
+INPUT['poretype'] = 1
+INPUT['npbverb'] = 0
+INPUT['nfocus'] = 2
+INPUT['bcopt'] = 5
+INPUT['eneopt'] = 2
+INPUT['frcopt'] = 0
+INPUT['cutfd'] = 5.0
+INPUT['cutnb'] = 0.0
+INPUT['ipb'] = 2
+INPUT['fillratio'] = 4.0
+INPUT['indi'] = 1.0
+INPUT['inp'] = 2
+INPUT['istrng'] = 0.0
+INPUT['linit'] = 1000
+INPUT['prbrad'] = 1.4
+INPUT['radiopt'] = 1
+INPUT['sander_apbs'] = 0
+INPUT['scale'] = 0.5
+INPUT['alarun'] = False
+INPUT['mutant_only'] = 0
+INPUT['mutant'] = 'ALA'
+INPUT['mutant_res'] = None
+INPUT['cas_intdiel'] = 0
+INPUT['intdiel_nonpolar'] = 1
+INPUT['intdiel_polar'] = 3
+INPUT['intdiel_positive'] = 5
+INPUT['intdiel_negative'] = 5
+INPUT['nmoderun'] = False
+INPUT['dielc'] = 1.0
+INPUT['drms'] = 0.001
+INPUT['maxcyc'] = 10000
+INPUT['nminterval'] = 1
+INPUT['nmendframe'] = 1000000
+INPUT['nmode_igb'] = 1
+INPUT['nmode_istrng'] = 0.0
+INPUT['nmstartframe'] = 1
+INPUT['decomprun'] = False
+INPUT['idecomp'] = 0
+INPUT['print_res'] = 'within 6'
+INPUT['rismrun'] = False
+INPUT['buffer'] = 14.0
+INPUT['closure'] = 'kh'
+INPUT['closureorder'] = 1
+INPUT['grdspc'] = 0.5
+INPUT['ng'] = '-1,-1,-1'
+INPUT['polardecomp'] = 0
+INPUT['rism_verbose'] = 0
+INPUT['solvbox'] = '-1,-1,-1'
+INPUT['solvcut'] = 14.0
+INPUT['thermo'] = 'std'
+INPUT['tolerance'] = 1e-05
+INPUT['rismrun_std'] = False
+INPUT['rismrun_gf'] = False
+INPUT['temp'] = 298.15
+INPUT['receptor_mask'] = ':1-85'
+INPUT['ligand_mask'] = ':86-98'
+FILES.clean = False
+FILES.complex_fixed = '_GMXMMPBSA_COM_FIXED.pdb'
+FILES.complex_groups = [1, 2]
+FILES.complex_index = '_GMXMMPBSA_COM_index.ndx'
+FILES.complex_prmtop = 'COM.prmtop'
+FILES.complex_top = None
+FILES.complex_tpr = '1ycr_prep.pdb'
+FILES.complex_trajs = ['COM_traj_0.xtc']
+FILES.gui = False
+FILES.infilehelp = False
+FILES.input_file = 'mmpbsa.in'
+FILES.ligand_group = None
+FILES.ligand_index = None
+FILES.ligand_mol2 = 'ligand.mol2'
+FILES.ligand_prmtop = 'LIG.prmtop'
+FILES.ligand_top = None
+FILES.ligand_tpr = None
+FILES.ligand_trajs = None
+FILES.make_mdins = False
+FILES.mutant_complex_prmtop = None
+FILES.mutant_ligand_prmtop = 'MUT_LIG.prmtop'
+FILES.mutant_receptor_prmtop = 'MUT_REC.prmtop'
+FILES.prefix = '_GMXMMPBSA_'
+FILES.receptor_group = None
+FILES.receptor_index = None
+FILES.receptor_prmtop = 'REC.prmtop'
+FILES.receptor_top = None
+FILES.receptor_tpr = None
+FILES.receptor_trajs = None
+FILES.reference_structure = None
+FILES.stability = False
+FILES.use_mdins = False
+FILES.xvvfile = '/opt/anaconda3/envs/amber/dat/mmpbsa/spc.xvv'
+size = 1
+numframes = 1
+numframes_nmode = 0
+mut_str = 'None'
+using_chamber = False
+|Input file:
+|--------------------------------------------------------------
+|
+|Sample input file for GB calculation
+|This input file is meant to show only that gmx_MMPBSA works. Althought,
+|we tried to used the input files as recommended in the Amber manual,
+|some parameters have been changed to perform more expensive calculations
+|in a reasonable amount of time. Feel free to change the parameters 
+|according to what is better for your system.
+|
+|&general
+|startframe=1, endframe=1, verbose=1, interval=1, temperature=300
+|protein_forcefield="oldff/leaprc.ff99SB",
+|/
+|
+|&gb
+|igb=2, saltcon=0.150,
+|/
+|--------------------------------------------------------------
