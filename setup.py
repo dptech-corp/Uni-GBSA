@@ -5,7 +5,7 @@ install_requires = [
 #        'pdb2pqr',
 ]
 setup(
-    name = 'hmtmmpbsa',
+    name = 'hmtpbsa',
     version='0.0.1',
     author='dptech.net',
     author_email='hermite@dptech.net',
@@ -18,7 +18,7 @@ setup(
     zip_safe = False,
     #packages=packages,
     entry_points={'console_scripts': [
-         'hmtmmpbsa = hmtmmpbsa.main:main',
+         'hmtpbsa = hmtpbsa.main:main',
      ]},
     include_package_data=True
 )
