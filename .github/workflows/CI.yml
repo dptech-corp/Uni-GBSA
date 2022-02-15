@@ -13,12 +13,12 @@ jobs:
     - name: install hmtpbsa
       shell: bash
       run: |
-        source ~/.bashrc
+        source activate amber21
         python setup.py install
 
     - name: run unittest
       shell: bash
       run: |
-        source ~/.bashrc
+        source activate amber21
         cd tests
         bash cmd.sh
