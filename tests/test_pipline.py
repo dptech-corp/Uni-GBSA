@@ -4,8 +4,8 @@ import unittest
 class TestPipline(unittest.TestCase):
     def pipline_single(self, pdbfile, rID, lID):
         pdbname = os.path.split(pdbfile)[-1]
-        #cmd = 'hmtmmpbsa -i %s -o /tmp/%s > hmtmmpbsa.log 2>&1 << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
-        cmd = 'hmtmmpbsa -i %s -o /tmp/%s  << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
+        #cmd = 'hmtpbsa -i %s -o /tmp/%s > hmtpbsa.log 2>&1 << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
+        cmd = 'hmtpbsa -i %s -o /tmp/%s  << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
         print(cmd)
         os.system(cmd)
         EF = os.path.exists('/tmp/%s/FINAL_RESULTS_MMPBSA.dat'%pdbname)
@@ -14,8 +14,8 @@ class TestPipline(unittest.TestCase):
     
     def pipline_traj(self, pdbfile, trajfile, rID, lID):
         pdbname = os.path.split(pdbfile)[-1]
-        #cmd = 'hmtmmpbsa -i %s -o /tmp/%s > hmtmmpbsa.log 2>&1 << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
-        cmd = 'hmtmmpbsa -i %s -t %s -o /tmp/%s  << EOF \n %d,%d \n EOF'%(pdbfile, trajfile, pdbname, rID, lID)
+        #cmd = 'hmtpbsa -i %s -o /tmp/%s > hmtpbsa.log 2>&1 << EOF \n %d,%d \n EOF'%(pdbfile, pdbname, rID, lID)
+        cmd = 'hmtpbsa -i %s -t %s -o /tmp/%s  << EOF \n %d,%d \n EOF'%(pdbfile, trajfile, pdbname, rID, lID)
         print(cmd)
         os.system(cmd)
         EF = os.path.exists('/tmp/%s/FINAL_RESULTS_MMPBSA.dat'%pdbname)
