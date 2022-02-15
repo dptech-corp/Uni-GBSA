@@ -19,4 +19,4 @@ RUN conda create -n amber21 python=3.9 \
 # clean up
 RUN rm -rf /opt/conda/pkgs/*
 # add env
-RUN echo "conda activate amber21" >> ~/.bashrc
+RUN echo "source activate amber21" >> ~/.bashrc
