@@ -4,29 +4,21 @@ on: [push]
 jobs:
   MMPBSA_unittest:
     runs-on: "ubuntu-latest"
-    container: dockerymh/ambertools21:latest
+    container: dpzhengh/hmtpbsa:hmtpbsa-v1
     
     steps:
     - name: checkout repo
       uses: actions/checkout@v2
-      
-    - name: Setup enverioment
-      shell: bash
-      run: |
-        conda init bash \
-        && echo "conda activate amber21" >> ~/.bashrc
-        source ~/.bashrc;
-        conda install mdanalysis==2.0.0 gmx_MMPBSA pdb2pqr -c conda-forge
         
-    - name: Install MMPBSA
+    - name: install hmtpbsa
       shell: bash
       run: |
-        source ~/.bashrc
-        python setup.py install;
+        source activate amber21
+        python setup.py install
 
-    - name: Run unittest
+    - name: run unittest
       shell: bash
       run: |
-        source ~/.bashrc
-        cd tests;
+        source activate amber21
+        cd tests
         bash cmd.sh

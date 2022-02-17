@@ -30,8 +30,8 @@ python setup.py install
 
 ## Usage
 ```Bash
-hmtmmpbsa -h
-Usage: hmtmmpbsa [-h] -i INP [-t TRAJ] [-o OUTP] [-ndx NDX] [-D]
+hmtpbsa -h
+Usage: hmtpbsa [-h] -i INP [-t TRAJ] [-o OUTP] [-ndx NDX] [-D]
 
 Free energy calcaulated by MMPBSA method.
 
@@ -46,14 +46,14 @@ optional arguments:
 
 ### Single PDB file
 ```Bash
-hmtmmpbsa -i example/2fvy.pdb -o single-pdb << EOF
+hmtpbsa -i example/2fvy.pdb -o single-pdb << EOF
 1,2
 EOF
 ```
 
 ### Trajectory
 ```Bash
-hmtmmpbsa -i example/ST/com.tpr -t example/ST/com_traj.xtc -o trajs-test << EOF
+hmtpbsa -i example/ST/com.tpr -t example/ST/com_traj.xtc -o trajs-test << EOF
 1,2
 EOF
 
