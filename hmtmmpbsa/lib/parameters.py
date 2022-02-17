@@ -1,3 +1,7 @@
+'''
+see the https://valdes-tresanco-ms.github.io/gmx_MMPBSA/input_file/#the-input-file
+'''
+
 stability = '''
 Sample input file for GB calculation
 This input file is meant to show only that gmx_MMPBSA works. Althought,
@@ -18,7 +22,7 @@ igb={igbValue}, saltcon=0.150,
 
 
 
-def generate_input_file(mode=1, outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300) -> None:
+def generate_input_file(mode=1, outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, model='gb') -> None:
     """[summary]
 
     Args:
