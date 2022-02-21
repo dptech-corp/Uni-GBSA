@@ -2,56 +2,62 @@
 see the https://valdes-tresanco-ms.github.io/gmx_MMPBSA/input_file/#the-input-file
 '''
 
-stability = '''
-Sample input file for GB calculation
-This input file is meant to show only that gmx_MMPBSA works. Althought,
-we tried to used the input files as recommended in the Amber manual,
-some parameters have been changed to perform more expensive calculations
-in a reasonable amount of time. Feel free to change the parameters 
-according to what is better for your system.
+from quopri import decodestring
+
+
+generalstring = '''
 
 &general
-startframe={startFrame}, endframe={endFrame}, verbose=2, interval={interval}, temperature={temperature}
+sys_name = {sysName}, startframe={startFrame}, endframe={endFrame}, verbose=2, interval={interval}, temperature={temperature},
 protein_forcefield="oldff/leaprc.ff99SB",
-/
-
-&gb
-igb={igbValue}, saltcon=0.150,
 /
 '''
 
+gbstring = '''
+&gb
+igb={igbValue}, saltcon=0.150
+/
+'''
 
+pbstring = '''
+&pb
+istrng=0.15, fillratio=4.0
+/
+'''
 
-def generate_input_file(mode=1, outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, model='gb') -> None:
-    """[summary]
+decostring = '''
+&decomp
+idecomp=2, dec_verbose=0,
+# This will print all residues that are less than 4 Å between
+# the receptor and the ligand
+print_res="within 5"
+/
+'''
 
-    Args:
-        mode (int, optional): Calculate mode: 
-                   1: protein-protein, 
-                   2: protein-ligand. 
-                     Defaults to 1.
-        outfile (str, optional): [description]. Defaults to 'mmpbsa.in'.
-        startFrame (int, optional): [description]. Defaults to 1.
-        endFrame (int, optional): [description]. Defaults to 1.
-        interval (int, optional): [description]. Defaults to 1.
-        temperature (int, optional): [description]. Defaults to 300.
-    """
-    igbValue = {
-        1: 2, # protein-protein
-        2: 5  # protein-ligand
-    }
-    if mode not in igbValue.keys():
-        raise Exception('suport value for mode: %d'%mode)
+def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate') -> None:
+
+    modes = ['gb', 'pb', 'gb+pb']
+    if mode not in modes:
+        raise Exception('Unknown type of mode: %s'%mode)
     args = {
+        'sysName':name+"_"+mode,
+        'mode':mode,
         "startFrame":startFrame,
         "endFrame": endFrame,
         "interval": interval,
         "temperature": temperature,
-        "igbValue": igbValue[mode]
+        "igbValue": igbValue,
     }
-    line = stability.format(**args)
+    line = generalstring.format(**args)
+    if 'gb' in mode:
+        line += gbstring.format(**args)
+    if 'pb' in mode:
+        line += pbstring
+    line += decostring
     with open(outfile, 'w') as fw:
         fw.write(line)
+    return outfile
+
 
 if __name__ == "__main__":
     pass
