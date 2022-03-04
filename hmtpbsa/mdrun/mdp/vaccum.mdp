@@ -1,0 +1,48 @@
+title       = MD simulation
+; Run parameters
+integrator  = md        ; leap-frog integrator
+nsteps      = 5000000  ; 2 * 250000000 = 500000 ps (5 ns)
+dt          = 0.002     ; 2 fs
+; Output control
+nstxout             = 0      ; save coordinates every 100.0 ps
+nstvout             = 0      ; save velocities every 100.0 ps
+nstenergy           = 0      ; save energies every 100.0 ps
+nstlog              = 500000      ; update log file every 100.0 ps
+nstxout-compressed      = 1   ; save compressed coordinates every 10.0 ps
+                                ; nstxout-compressed replaces nstxtcout
+compressed-x-grps                = system    ; replaces xtc-grps
+; Bond parameters
+continuation            = no       ; Restarting after NPT
+constraint_algorithm    = lincs     ; holonomic constraints
+constraints             = all-bonds ; all bonds (even heavy atom-H bonds) constrained
+lincs_iter              = 1         ; accuracy of LINCS
+lincs_order             = 4         ; also related to accuracy
+; Neighborsearching
+cutoff-scheme   = Verlet
+ns_type         = grid      ; search neighboring grid cells
+nstlist         = 20        ; 20 fs, largely irrelevant with Verlet scheme
+vdwtype                  = cutoff
+vdw-modifier             = force-switch
+rvdw-switch              = 1.0
+rvdw                     = 1.2
+; Electrostatics
+coulombtype     = cut-off       ; Particle Mesh Ewald for long-range electrostatics
+rcoulomb        = 1.2       ; short-range electrostatic cutoff (in nm)
+pme_order       = 4         ; cubic interpolation
+fourierspacing  = 0.14      ; grid spacing for FFT
+; Temperature coupling is on
+tcoupl      = V-rescale             ; modified Berendsen thermostat
+tc-grps     = system   ; two coupling groups - more accurate
+tau_t       = 0.1           ; time constant, in ps
+ref_t       = 298           ; reference temperature, one for each group, in K
+; Pressure coupling is on
+pcoupl              = no     ; Pressure coupling on in NPT
+pcoupltype          = isotropic             ; uniform scaling of box vectors
+tau_p               = 2.0                   ; time constant, in ps
+ref_p               = 1.0                   ; reference pressure, in bar
+compressibility     = 4.5e-5                ; isothermal compressibility of water, bar^-1
+; Periodic boundary conditions
+pbc     = xyz       ; 3-D PBC
+refcoord-scaling         = com
+; Velocity generation
+gen_vel     = yes       ; Velocity generation is off
