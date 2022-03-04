@@ -209,6 +209,31 @@ def mmpbsa_pdb(pdbfile, groupIDs, outdir, prep=True, DEBUG=False):
             raise Exception('ERROR run command %s'%cmd)
 
 def mmbpsa_traj(tprfile, trajfile, groupIDs, outdir, indexFile=None, DEBUG=False):
+    '''
+    1. generate an index file for the selected group
+        2. select the group from the tpr file
+        3. generate a mol2 file for the ligand
+        4. run mmpbsa
+        5. copy the result file to the output directory
+        6. clean the output directory
+    
+    # Python
+    def mmpbsa_traj_with_index(tprfile, trajfile, groupIDs, outdir, indexFile=None, DEBUG=False):
+        tprfile = os.path.abspath(tprfile)
+        trajfile = os.path.abspath(trajfile)
+        nFrame = obtain_number_of_traj_frame(tprfile, trajfile)
+        pwd = os.getcwd()
+        if not os.path.exists(outdir):
+            os.mkdir(
+    
+    Args:
+      tprfile: The input tpr file
+      trajfile: the trajectory file
+      groupIDs: a list of two group IDs, e.g. [1,2]
+      outdir: the directory where the output files will be written
+      indexFile: The index file that contains the group definitions.
+      DEBUG: If you want to debug the script, set this to True. Defaults to False
+    '''
     tprfile = os.path.abspath(tprfile)
     trajfile = os.path.abspath(trajfile)
     nFrame = obtain_number_of_traj_frame(tprfile, trajfile)

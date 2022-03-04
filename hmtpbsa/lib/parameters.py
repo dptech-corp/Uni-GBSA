@@ -34,9 +34,9 @@ print_res="within 5"
 /
 '''
 
-def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate') -> None:
+def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate', decompose=False) -> None:
 
-    modes = ['gb', 'pb', 'gb+pb']
+    modes = ['gb', 'pb', 'gb+pb', 'pb+gb']
     if mode not in modes:
         raise Exception('Unknown type of mode: %s'%mode)
     args = {
@@ -53,7 +53,8 @@ def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1
         line += gbstring.format(**args)
     if 'pb' in mode:
         line += pbstring
-    line += decostring
+    if decompose:
+        line += decostring
     with open(outfile, 'w') as fw:
         fw.write(line)
     return outfile
