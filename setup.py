@@ -6,7 +6,7 @@ install_requires = [
 ]
 setup(
     name = 'hmtpbsa',
-    version='0.0.1',
+    version='0.0.2',
     author='dptech.net',
     author_email='hermite@dptech.net',
     description=('MMBPSA tools for calculate energy.'),
@@ -18,7 +18,8 @@ setup(
     zip_safe = False,
     #packages=packages,
     entry_points={'console_scripts': [
-         'hmtpbsa = hmtpbsa.main:main',
+         'hmtpbsa-pipeline = hmtpbsa.pipeline:main',
+         'hmtpbsa-traj = hmtpbsa.pbsa.pbsarun:main',
      ]},
     include_package_data=True
 )
