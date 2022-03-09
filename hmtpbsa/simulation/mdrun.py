@@ -41,7 +41,8 @@ class GMXEngine(BaseObject):
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:
             print(cmd)
-            raise Exception('ERROR run grompp %s'%pdbfile)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR run grompp %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outtpr
     
     def _mdrun(self, tprfile, nt=NUM_OF_THREAD):
@@ -67,7 +68,8 @@ class GMXEngine(BaseObject):
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:
             print(cmd)
-            raise Exception('ERROR run mdrun %s'%tprfile)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR run mdrun %s. See the logfile for details %s'%(tprfile, os.path.abspath(self.gmxlog)))
         return jobname+'.gro'
 
     def gmx_box(self, pdbfile, boxtype='triclinic', boxsize=0.9):
@@ -97,7 +99,8 @@ class GMXEngine(BaseObject):
         RC = os.system(cmd+'>>%s 2>&1'%self.gmxlog)
         if RC != 0:
             print(cmd)
-            raise Exception('ERROR add a box for the %s'%pdbfile)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR add a box for the %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile
     
     def gmx_solvate(self, pdbfile, topfile, watergro='spc216.gro', maxsol=None):
@@ -127,7 +130,8 @@ class GMXEngine(BaseObject):
         RC = os.system(cmd+'>>%s 2>&1'%self.gmxlog)
         if RC != 0:
             print(cmd)
-            raise Exception('ERROR solvate the %s'%pdbfile)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR solvate the %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile
 
     def gmx_ions(self, pdbfile, topfile, conc=0.15, mdpfile=os.path.join(MDPFILESDIR, 'ions.mdp'), nNA=None, nCL=None, neutral=True):
@@ -167,7 +171,8 @@ class GMXEngine(BaseObject):
         RC = os.system(cmd+'>>%s 2>&1 <<EOF\nSOL\nEOF'%self.gmxlog)
         if RC != 0:
             print(cmd)
-            raise Exception('ERROR for add ions %s'%pdbfile)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR for add ions %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile, topfile
 
     def gmx_minim(self, pdbfile, topfile, nt=NUM_OF_THREAD, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp')):

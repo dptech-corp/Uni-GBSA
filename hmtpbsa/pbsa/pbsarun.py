@@ -63,7 +63,7 @@ class PBSA(object):
         cmd = '{gmx_MMPBSA} -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
         RC = os.system(cmd)
         if RC != 0:
-            raise Exception('ERROR run: %s \nPlease ckeck the log file for details: mmpbsa.log'%cmd)
+            raise Exception('ERROR run: %s \nPlease ckeck the log file for details: %s'%(cmd, os.path.abspath("mmpbsa.log")))
         shutil.copy('FINAL_RESULTS_MMPBSA.dat', self.cwd)
         outfile = "FINAL_RESULTS_MMPBSA.dat"
         self.clean(verbose=verbose)
