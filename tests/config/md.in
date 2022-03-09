@@ -1,0 +1,14 @@
+[simulation]
+mode = md
+boxtype = triclinic
+boxsize = 0.9
+conc = 0.15
+nstep = 500
+proteinforcefield = amber99sb-ildn
+ligandforcefield = gaff2
+
+[GBSA]
+mode = gb
+decomposition = 0
+indi = 1
+exdi = 80

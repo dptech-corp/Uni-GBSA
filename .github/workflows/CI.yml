@@ -9,6 +9,12 @@ jobs:
     steps:
     - name: checkout repo
       uses: actions/checkout@v2
+    
+    - name: install acpype
+      shell: bash
+      run: |
+        source activate amber21
+        pip install acpype
         
     - name: install hmtpbsa
       shell: bash
