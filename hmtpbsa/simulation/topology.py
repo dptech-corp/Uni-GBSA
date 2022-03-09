@@ -90,7 +90,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn'):
     
     engine = GMXEngine()
     boxpdb = engine.gmx_box('1-pdb2gmx.pdb', boxtype='triclinic', boxsize=0.9)
-    solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=3)
+    solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=5)
     ionspdb = engine.gmx_ions(solpdb, 'topol.top', conc=None, nNA=1, nCL=1, neutral=False)
     #engine.
     protgro = pmd.load_file('1-pdb2gmx.pdb', structure=True)
@@ -138,6 +138,8 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
             if line.startswith(records) and CF:
                 tmp = line.strip().split()
                 molname, molnum = tmp[0], int(tmp[1])-1
+                if molname == 'SOL':
+                    molnum -= 2
                 if molnum > 1:
                     line = '%s        %d\n'%(molname, molnum)
                 else:
