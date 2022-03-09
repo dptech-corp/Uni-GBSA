@@ -90,7 +90,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn'):
     
     engine = GMXEngine()
     boxpdb = engine.gmx_box('1-pdb2gmx.pdb', boxtype='triclinic', boxsize=0.9)
-    solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=2)
+    solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=3)
     ionspdb = engine.gmx_ions(solpdb, 'topol.top', conc=None, nNA=1, nCL=1, neutral=False)
     #engine.
     protgro = pmd.load_file('1-pdb2gmx.pdb', structure=True)
@@ -129,11 +129,11 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
     sysgro.write_pdb(outpdb)
     lines = []
     CF = 0
-    records = ('NA', 'CL')
+    records = ('NA', 'CL', 'SOL')
     with open(outtop) as fr:
         for line in fr:
             if line.startswith('[') and line.split()[1]=='molecules':
-                CF = 2
+                CF = 3
                 lines.append('\n; Include Position restraint file\n#ifdef POSRES\n#endif\n')
             if line.startswith(records) and CF:
                 tmp = line.strip().split()
