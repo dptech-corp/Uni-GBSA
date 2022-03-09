@@ -44,7 +44,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
-        raise Exception('ERROR run the acpype. see the %s/acpype.log for details.'%ligandName)
+        raise Exception('ERROR run the acpype. see the %s for details.'%os.path.abspath("acpype.log"))
     os.chdir('MOL.acpype')
     moltop = pmd.load_file('MOL_GMX.top')
     molgro = pmd.load_file('MOL_GMX.gro', structure=True)
@@ -84,7 +84,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn'):
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
-        raise Exception('ERROR run gmx! see the log file for details %s/gromacs.log'%(proteinName))
+        raise Exception('ERROR run gmx! see the log file for details %s'%os.path.abspath("gromacs.log"))
     
     engine = GMXEngine()
     boxpdb = engine.gmx_box('1-pdb2gmx.pdb', boxtype='triclinic', boxsize=0.9)
