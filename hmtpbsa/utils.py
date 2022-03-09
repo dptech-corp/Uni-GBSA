@@ -1,8 +1,16 @@
-
 import os
 import shutil
-from tokenize import group
+
 def obtain_id_from_index(indexFile):
+    """
+    Given an index file, return the group IDs of the receptor and ligand
+    
+    Args:
+      indexFile: the index file that contains the information about the receptor and ligand groups.
+    
+    Returns:
+      the receptor and ligand IDs.
+    """
     receptorID = None
     ligandID = None
     groupCount = 0
@@ -26,6 +34,15 @@ def obtain_id_from_index(indexFile):
     return receptorID, ligandID
 
 def generate_index_file(complexfile):
+    """
+    Generate index file for the complex file
+    
+    Args:
+      complexfile: The name of the complex file.
+    
+    Returns:
+      The index file is being returned.
+    """
     
     cmd = '''gmx make_ndx -f %s 2>&1 << EOF
            name 2 LIGAND
@@ -52,11 +69,10 @@ def generate_index_file(complexfile):
     if 'CL' in groupdict:
         NACL += ' ! %d'%groupdict['CL']
     groupdict['NACL'] = NACL
-    cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 << EOF
+    cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
         {non-Water} & {NACL} & ! {LIGAND}
         name {RECEPTOR} RECEPTOR
-           q
-        EOF '''.format(**groupdict)
+           q\nEOF'''.format(**groupdict)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
