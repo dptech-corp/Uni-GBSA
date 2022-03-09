@@ -29,32 +29,50 @@ python setup.py install
 ```
 
 ## Usage
-```Bash
-hmtpbsa -h
-Usage: hmtpbsa [-h] -i INP [-t TRAJ] [-o OUTP] [-ndx NDX] [-D]
+* If you have the gromacs topology and index files. Just use the ``hmtpbsa-traj``
+````
+hmtpbsa-traj -h
+usage: hmtpbsa-traj [-h] -i INP -p TOP -ndx NDX [-m {gb,pb,pb+gb,gb+pb}] [-t TRAJ] [-indi INDI] [-dec] [-D]
 
-Free energy calcaulated by MMPBSA method.
+Free energy calcaulated by PBSA method.
 
 optional arguments:
-  -h, --help  show this help message and exit
-  -i INP      A pdb file or a tpr file to calculate the free energy.
-  -t TRAJ     A trajectory file contains many structure frames. File format: xtc, pdb, gro...
-  -o OUTP     Output floder to save results.
-  -ndx NDX    Index file.
-  -D          DEBUG model, keep all the files.
-```
+  -h, --help            show this help message and exit
+  -i INP                A pdb file or a tpr file for the trajectory.
+  -p TOP                Gromacs topol file for the system.
+  -ndx NDX              Gromacs index file, must contain recepror and ligand group.
+  -m {gb,pb,pb+gb,gb+pb}
+                        Method to calculate: gb, pb, pb+gb. default:gb
+  -t TRAJ               A trajectory file contains many structure frames. File format: xtc, pdb, gro...
+  -indi INDI            External dielectric constant. detault: 1.0
+  -dec                  Decompose the energy. default:false
+  -D                    DEBUG model, keep all the files.
+````
 
-### Single PDB file
+
+* If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
 ```Bash
-hmtpbsa -i example/2fvy.pdb -o single-pdb << EOF
-1,2
-EOF
+hmtpbsa-pipeline -h
+usage: hmtpbsa-pipeline [-h] -i RECEPTOR -l LIGAND [LIGAND ...] [-c CONFIG]
+
+GBSA Calculation.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i RECEPTOR           Input protein file with pdb format.
+  -l LIGAND [LIGAND ...]
+                        Ligand files to calculate binding energy.
+  -c CONFIG             Configue file, default: /opt/anaconda3/envs/amber/lib/python3.8/site-
+                        packages/hmtpbsa-0.0.2-py3.8.egg/hmtpbsa/data/detault.ini
 ```
 
-### Trajectory
+## Example
+* Calculate PBSA value with ``hmtpbsa-traj``
 ```Bash
-hmtpbsa -i example/ST/com.tpr -t example/ST/com_traj.xtc -o trajs-test << EOF
-1,2
-EOF
-
+hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/complex.ndx -m pb+gb -t example/3f/complex.pdb
 ```
+
+* Give a protein and some ligand files. Obtain the binding energy with ``hmtpbsa-pipeline``
+````Bash
+hmtpbsa-pipeline -i example/md/protein.pdb -l example/md/3f.mol
+````
