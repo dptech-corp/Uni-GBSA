@@ -11,11 +11,11 @@ import MDAnalysis as mda
 
 try:
     from .lib.prepare import pdb2pqr
-    from .lib.parameters import generate_input_file
+    from .pbsa.parameters import generate_input_file
     from .lib.groups import detect_group, gmx_index_group, print_group, select_group
 except:
     from lib.prepare import pdb2pqr
-    from lib.parameters import generate_input_file
+    from hmtpbsa.pbsa.parameters import generate_input_file
     from lib.groups import detect_group, gmx_index_group, print_group, select_group
 
 try:

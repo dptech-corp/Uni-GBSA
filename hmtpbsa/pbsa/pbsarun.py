@@ -1,53 +1,16 @@
 import os
-import sys
-
-
 import shutil
 import logging
 import argparse
-from lib.parameters import generate_input_file
-from utils import obtain_id_from_index
+from hmtpbsa.settings import gmx_MMPBSA
+from hmtpbsa.utils import obtain_id_from_index
+from hmtpbsa.pbsa.utils import obtain_num_of_frame
+from hmtpbsa.pbsa.parameters import generate_input_file
 
 '''
 1. one protein file and many other ligands file
 2. one complex file and a trajectory file.
 '''
-
-def set_amber_home(proc):
-    cmd = 'which %s '%proc
-    f = os.popen(cmd)
-    text = f.read().strip()
-    if not text:
-        raise Exception("Command not found: %s "%proc)
-    bindir = os.path.split(text)[0]
-    amberhome = os.path.split(bindir)[0]
-    return amberhome
-
-gmx_MMPBSA='gmx_MMPBSA'
-if 'AMBERHOME' not in os.environ:
-    #os.environ['AMBERHOME'] = set_amber_home(gmx_MMPBSA)
-    raise Exception("Not found variable AMBERHOME")
-
-def obtain_num_of_frame(trajfile):
-    """
-    Get the number of frames in a trajectory file
-    
-    Args:
-      trajfile: the trajectory file, in .xtc or .trr format.
-    
-    Returns:
-      the number of frames in the trajectory file.
-    """
-    cmd = 'gmx check -f %s 2>&1 |grep Coords'%trajfile
-    fr = os.popen(cmd)
-    text = fr.read().strip()
-    if not text:
-        print(cmd)
-        raise Exception("ERROR obtain %s's frame number.")
-    nframe = int(text.split()[1])
-    return nframe
-    
-
 
 class PBSA(object):
     def __init__(self, workdir='MMPBSA', mode='gb') -> None:
@@ -55,7 +18,17 @@ class PBSA(object):
         self.mode = mode
         self.cwd = os.getcwd()
 
-    def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, decompose=False):
+    def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, decompose=False, indi=1.0, exdi=80.0):
+        """
+        The function is used to set the parameters for the MMPBSA.py script
+        
+        Args:
+          complexfile: the complex pdb file
+          trajectoryfile: the trajectory file, such as md.xtc
+          topolfile: the topology file of the complex
+          indexfile: the index file of the system, which contains the index of the receptor and ligand.
+          decompose: whether to decompose the complex into its components. Defaults to False
+        """
         if not os.path.exists(self.workdir):
             os.mkdir(self.workdir)
         complexfile = os.path.abspath(complexfile)
@@ -64,7 +37,7 @@ class PBSA(object):
         topolfile = os.path.abspath(topolfile)
         os.chdir(self.workdir)
         nframe = obtain_num_of_frame(trajectoryfile)
-        mmbpsafile = generate_input_file(self.mode, decompose=decompose, outfile='mmpbsa.in', startFrame=1, endFrame=nframe, interval=1, temperature=300, igbValue=2, name='Calculate')
+        mmbpsafile = generate_input_file(self.mode, decompose=decompose, outfile='mmpbsa.in', startFrame=1, endFrame=nframe, interval=1, temperature=300, igbValue=2, name='Calculate', indi=indi, exdi=exdi)
         # mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate', decompose=False
         receptor, ligand = obtain_id_from_index(indexfile)
         self.paras = {
@@ -79,6 +52,12 @@ class PBSA(object):
         }
 
     def run(self, verbose=0):
+        """
+        The function is used to run the gmx_MMPBSA.py script
+        
+        Args:
+          verbose: verbose level. Defaults to 0
+        """
         #print("="*80)
         logging.info('Run the gmx_MMPBSA: %s'%self.mode)
         cmd = '{gmx_MMPBSA} -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
@@ -92,6 +71,12 @@ class PBSA(object):
         print('Results: %s'%outfile)
 
     def clean(self, verbose=0):
+        """
+        Clean the results
+        
+        Args:
+          verbose: if True, print out the command line before executing it. Defaults to 0
+        """
         #print('='*80)
         logging.info('Clean the results.')
         if not verbose:
@@ -101,8 +86,17 @@ class PBSA(object):
         os.chdir(self.cwd)
 
     def extract_result(self, energyfile='FINAL_RESULTS_MMPBSA.dat'):
+        """
+        Extract the GB and PB energy from the final results file
+        
+        Args:
+          energyfile: the name of the file that contains the energy information. Defaults to
+        FINAL_RESULTS_MMPBSA.dat
+        
+        Returns:
+          A dictionary with the GB and PB delta G values.
+        """
         tagName = False#["GENERALIZED BORN", "POISSON BOLTZMANN"]
-        tagG = False
         detal_G = {}
 
         with open(energyfile) as fr:
@@ -124,23 +118,19 @@ def main():
     parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file for the trajectory.', required=True)
     parser.add_argument('-p', dest='TOP', help='Gromacs topol file for the system.', required=True)
     parser.add_argument('-ndx', dest='ndx', help='Gromacs index file, must contain recepror and ligand group.', required=True)
-    parser.add_argument('-o', dest='OUTP', help='Output floder to save results.', default=None)
     parser.add_argument('-m', dest='MODE', help='Method to calculate: gb, pb, pb+gb. default:gb', default='gb', choices=['gb', 'pb', 'pb+gb', 'gb+pb'])
     parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
+    parser.add_argument('-indi', help='External dielectric constant. detault: 1.0', default=1.0, type=float)
     parser.add_argument('-dec', dest='dec', help='Decompose the energy. default:false', action='store_true', default=False)
     parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
 
     args = parser.parse_args()
     #exit(0)
-    complexFile, topolFile, indexFile,  outdir, trajFile, debug, dec, mode = args.INP, args.TOP, args.ndx, args.OUTP, args.TRAJ, args.DEBUG, args.dec, args.MODE
+    complexFile, topolFile, indexFile, trajFile, debug, dec, mode, indi = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.dec, args.MODE, args.indi
     if trajFile is None:
         trajFile = complexFile
-    #if len(sys.argv[1:])!=5:
-    #    print('Usage: python %s <complexfile> <trajfile> <topfile> <indexfile> <mode>'%sys.argv[1])
-    #    exit(0)
-    #complexFile, trajFile, topolFile, indexFile, mode= sys.argv[1:]
     pbsa = PBSA(mode=mode)
-    pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, decompose=dec)
+    pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, decompose=dec, indi=indi)
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
