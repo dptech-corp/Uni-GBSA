@@ -9,8 +9,9 @@ class TestPipline(unittest.TestCase):
         pdbfile = os.path.abspath(pdbfile)
         ligandfile = os.path.abspath(ligandfile)
         pdbname = "/tmp/" + os.path.split(pdbfile)[-1]
-        if not os.path.exists(pdbname):
-            os.mkdir(pdbname)
+        if os.path.exists(pdbname):
+            shutil.rmtree(pdbname)
+        os.mkdir(pdbname)
         return pdbfile, ligandfile, pdbname
 
 #################### version 0.0.1 ########################
@@ -48,7 +49,7 @@ class TestPipline(unittest.TestCase):
         ligand = ' '.join(ligandfiles)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
+        cmd = 'export NUM_OF_THREAD=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
         print(cmd)
         os.system(cmd)
         EF = os.path.exists('BindingEnergy.csv')
@@ -67,7 +68,7 @@ class TestPipline(unittest.TestCase):
         pdbfile, ligandfile, workdir = self.base(pdbfile, pdbfile)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'hmtpbsa-traj -i %s -p %s -ndx %s -m pb+gb -t complex.pdb -indi 1'%(pdbfile, topfile, indexfile)
+        cmd = 'hmtpbsa-traj -i %s -p %s -ndx %s -m pb+gb -t %s -indi 1'%(pdbfile, topfile, indexfile, pdbfile)
         RC = os.system(cmd)
         if RC != 0:
             EF = False
