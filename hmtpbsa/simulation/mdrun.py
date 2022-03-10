@@ -64,7 +64,7 @@ class GMXEngine(BaseObject):
             'nt': nt,
         }
 
-        cmd = '{gmx} mdrun -v -deffnm {jobname} -nt {nt} '.format(**args)
+        cmd = '{gmx} mdrun -v -deffnm {jobname} -nt {nt} -ntmpi 1 '.format(**args)
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:
             print(cmd)
