@@ -4,7 +4,7 @@ import sys
 import shutil
 import parmed as pmd
 
-from hmtpbsa.settings import GMXEXE
+from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype
 
@@ -36,11 +36,12 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     cwd = os.getcwd()
     os.chdir(ligandName)
     paras = {
+        'thread':OMP_NUM_THREADS,
         'ligandfile': ligandfile,
         'forcefield': forcefield,
         'method': charge_method
     }
-    cmd = "acpype -i {ligandfile} -b MOL -a {forcefield} -c {method} -f >acpype.log 2>&1 ".format(**paras)
+    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b MOL -a {forcefield} -c {method} -f >acpype.log 2>&1 ".format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
