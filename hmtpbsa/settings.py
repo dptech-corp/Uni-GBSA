@@ -18,7 +18,7 @@ if 'AMBERHOME' not in os.environ:
     #os.environ['AMBERHOME'] = set_amber_home(gmx_MMPBSA)
     raise Exception("Not found variable AMBERHOME")
 
-if 'NUM_OF_THREAD' in os.environ:
-    NUM_OF_THREAD = os.environ['NUM_OF_THREAD']
+if 'OMP_NUM_THREADS' in os.environ:
+    OMP_NUM_THREADS = os.environ['OMP_NUM_THREADS']
 else:
-    NUM_OF_THREAD = 4
+    OMP_NUM_THREADS = 4

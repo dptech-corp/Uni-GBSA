@@ -49,7 +49,7 @@ class TestPipline(unittest.TestCase):
         ligand = ' '.join(ligandfiles)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'export NUM_OF_THREAD=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
+        cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
         print(cmd)
         os.system(cmd)
         EF = os.path.exists('BindingEnergy.csv')
