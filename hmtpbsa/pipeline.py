@@ -160,7 +160,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
         logging.info('Running GBSA: %s'%ligandName)
         indexfile = generate_index_file(grofile)
     
-        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, mode=gbsaParas['mode'], dec=gbsaParas['decomposition'], indi=gbsaParas['indi'], exdi=gbsaParas['endi'])
+        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, mode=gbsaParas['mode'], dec=gbsaParas['decomposition'], indi=gbsaParas['indi'], exdi=gbsaParas['exdi'])
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
@@ -179,6 +179,8 @@ def main():
 
     args = parser.parse_args()
     receptor, ligands, conf = args.receptor, args.ligand, args.config
+    if not os.path.exists(conf):
+        raise Exception("Not found the configure file! %s"%conf)
     config = configparser.ConfigParser()
     config.read(conf)
 

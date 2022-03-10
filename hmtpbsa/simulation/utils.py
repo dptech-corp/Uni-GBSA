@@ -22,7 +22,7 @@ def convert_to_mol2(inputfile, filetype, outfile=None):
     RC = os.system(cmd)
     if RC!=0:
         raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
-    return outfile
+    return os.path.abspath(outfile)
 
 def guess_filetype(inputfile):
     """Guess the file type of input file.

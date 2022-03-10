@@ -1,6 +1,6 @@
 import os
 import shutil
-from hmtpbsa.settings import GMXEXE, MDPFILESDIR, NUM_OF_THREAD
+from hmtpbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
 
 class BaseObject(object):
     pass
@@ -45,7 +45,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR run grompp %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outtpr
     
-    def _mdrun(self, tprfile, nt=NUM_OF_THREAD):
+    def _mdrun(self, tprfile, nt=OMP_NUM_THREADS):
         """
         The function takes a tpr file and runs md
         
@@ -175,7 +175,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR for add ions %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile, topfile
 
-    def gmx_minim(self, pdbfile, topfile, nt=NUM_OF_THREAD, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp')):
+    def gmx_minim(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp')):
         """
         The gmx_minim function takes a pdb file and a topology file and runs a minimization on the pdb file
         
@@ -192,7 +192,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt)       
         return outfile
 
-    def gmx_nvt(self, pdbfile, topfile, nt=NUM_OF_THREAD, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp')):
+    def gmx_nvt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp')):
         """
         1. grompp: generate tpr file from pdb and topology files
         2. mdrun: run the simulation using the tpr file
@@ -212,7 +212,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt)       
         return outfile
     
-    def gmx_npt(self, pdbfile, topfile, nt=NUM_OF_THREAD, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp')):
+    def gmx_npt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp')):
         """
         This function runs gromacs npt simulation
         
@@ -229,7 +229,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt)       
         return outfile
     
-    def gmx_md(self, pdbfile, topfile, nt=NUM_OF_THREAD, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=500000):
+    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=500000):
         """
         This function is used to generate a gromacs trajectory file from a pdb file
         
