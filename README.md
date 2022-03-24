@@ -13,17 +13,11 @@ apt install gromacs
 
 ### step 2: install ambertools
 ```Bash
-conda create -n amber21 -c conda-forge ambertools=21
+conda create -n amber21 -c conda-forge ambertools=21 gmx_MMPBSA=1.4.3 acpype=2021.02
 
 ```
 
-### step 3: install requirment
-```Bash
-conda activate amber21
-conda install mdanalysis==2.0.0 gmx_MMPBSA pdb2pqr -c conda-forge
-```
-
-### step 4: installl hermite-mmpbsa
+### step 3: install hermite-mmpbsa
 ```Bash
 python setup.py install
 ```
@@ -69,10 +63,10 @@ optional arguments:
 ## Example
 * Calculate PBSA value with ``hmtpbsa-traj``
 ```Bash
-hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/complex.ndx -m pb+gb -t example/3f/complex.pdb
+hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb+gb -t example/3f/complex.pdb
 ```
 
 * Give a protein and some ligand files. Obtain the binding energy with ``hmtpbsa-pipeline``
 ````Bash
-hmtpbsa-pipeline -i example/md/protein.pdb -l example/md/3f.mol
+hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ````
