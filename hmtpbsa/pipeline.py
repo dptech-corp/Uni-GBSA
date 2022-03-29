@@ -196,6 +196,8 @@ def main():
         },
         'GBSA':{
             'mode': config.get('GBSA', 'mode', fallback='gb'),
+            'GB-type': config.getint('GBSA', 'GB-type', fallback=5),
+            'PB-type': config.getint('GBSA', 'PB-type', fallback=2),
             'decomposition': config.getboolean('GBSA', 'decomposition', fallback=False),
             'indi': config.getfloat('GBSA', 'indi', fallback=1.0), # Internal dielectric constant
             'exdi': config.getfloat('GBSA', 'exdi', fallback=80.0) # External dielectric constant
