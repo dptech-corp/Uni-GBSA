@@ -180,7 +180,7 @@ def main():
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
 
     args = parser.parse_args()
-    receptor, ligands, conf, ligdir, outfile = args.receptor, args.ligand, args.config, args.ligdir, args.outdir
+    receptor, ligands, conf, ligdir, outfile = args.receptor, args.ligand, args.config, args.ligdir, args.outfile
     
     if ligands is None:
         ligands = []
