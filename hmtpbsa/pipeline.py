@@ -174,11 +174,23 @@ def md_pipeline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
 def main():
     parser = argparse.ArgumentParser(description='GBSA Calculation.')
     parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', required=True)
-    parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', required=True)
+    parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
     parser.add_argument('-c', dest='config', help='Configue file, default: %s'%DEFAULT_CONFIGURE_FILE, default=DEFAULT_CONFIGURE_FILE)
+    parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
+    parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
 
     args = parser.parse_args()
-    receptor, ligands, conf = args.receptor, args.ligand, args.config
+    receptor, ligands, conf, ligdir, outfile = args.receptor, args.ligand, args.config, args.ligdir, args.outdir
+    
+    if ligands is None:
+        ligands = []
+    if ligdir:
+        for fileName in os.listdir(ligdir):
+            if fileName.endswith(('mol','sdf')):
+                ligands.append(os.path.join(ligdir, fileName))
+    if len(ligands)==0:
+        raise Exception('No ligands file found.')
+
     if not os.path.exists(conf):
         raise Exception("Not found the configure file! %s"%conf)
     config = configparser.ConfigParser()
@@ -205,9 +217,10 @@ def main():
     }
 
     if paras['simulation']['mode'] == 'em':
-        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras)
+        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile)
     elif paras['simulation']['mode'] == 'md':
-        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras)
+        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile)
+    
 
 if __name__ == "__main__":
     main()
