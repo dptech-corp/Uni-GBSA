@@ -13,7 +13,7 @@ apt install gromacs
 
 ### step 2: install ambertools
 ```Bash
-conda create -n amber21 -c conda-forge ambertools=21 gmx_MMPBSA=1.4.3 acpype=2021.02
+conda create -n amber21 -c conda-forge ambertools=21 gmx_MMPBSA=1.5.2 acpype=2021.02
 
 ```
 
