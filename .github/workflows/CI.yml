@@ -15,6 +15,7 @@ jobs:
       run: |
         source activate amber21
         pip install acpype
+        pip install gmx_MMPBSA==1.5.2
         
     - name: install hmtpbsa
       shell: bash
