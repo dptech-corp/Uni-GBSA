@@ -10,7 +10,7 @@ from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.topology import build_topol, build_protein
 from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE
 
-def traj_pipeline(complexfile, trajfile, topolfile, indexfile, mode='gb', dec=False, debug=False, indi=1.0, exdi=80.0):
+def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, debug=False):
     """
     A pipeline for calculate GBSA/PBSA for trajectory
     
@@ -27,8 +27,8 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, mode='gb', dec=Fa
       detal_G is a dictionary, the key is the mode, the value is a list, the first element is the
     average value, the second element is the standard deviation.
     """
-    pbsa = PBSA(mode=mode)
-    pbsa.set_paras(complexfile=complexfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, decompose=dec, indi=indi, exdi=exdi)
+    pbsa = PBSA()
+    pbsa.set_paras(complexfile=complexfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -36,7 +36,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, mode='gb', dec=Fa
         print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
     return detal_G
 
-def base_pipeline(receptorfile, ligandfile, paras=None):
+def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
     """
     This function takes a receptorfile and ligandfile, and build a complex.pdb and complex.top file
     
@@ -45,12 +45,44 @@ def base_pipeline(receptorfile, ligandfile, paras=None):
       ligandfile: the name of the ligand file
       paras: a dictionary of parameters for the pipeline.
     """
-    grofile = 'complex.pdb'
-    topfile = 'complex.top'
-    build_topol(receptorfile, ligandfile, outpdb=grofile, outtop=topfile)
-    pass
+    simParas = paras['simulation']
+    pbsaParas = paras['PBSA']
 
-def minim_peipline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
+    receptorfile = os.path.abspath(receptorfile)
+    logging.info('Build protein topology.')
+    receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
+
+    detalGdict = {'name':[]}
+    for k in ['GB','PB', 'gb', 'pb']:
+        if k in pbsaParas['modes']:
+            detalGdict[k.upper()] = []
+            detalGdict['%s_err'%k.upper()] = []
+    
+    cwd = os.getcwd()
+    for ligandfile in ligandfiles:
+        ligandfile = os.path.abspath(ligandfile)
+        ligandName = os.path.split(ligandfile)[-1][:-4]
+        if not os.path.exists(ligandName):
+            os.mkdir(ligandName)
+        os.chdir(ligandName)
+
+        grofile = 'complex.pdb'
+        topfile = 'complex.top'
+        logging.info('Build ligand topology: %s'%ligandName)
+        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'])
+
+        indexfile = generate_index_file(grofile)
+        pbsaParas = paras['PBSA']
+        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+        detalGdict['name'].append(ligandName)
+        for k,v in detalG.items():
+            detalGdict[k.upper()].append(v[0])
+            detalGdict["%s_err"%k.upper()].append(v[1])
+        os.chdir(cwd)
+    df = pd.DataFrame(detalGdict)
+    df.to_csv(outfile, index=False)
+
+def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
     """
     It runs the simulation pipeline for each ligand.
     
@@ -61,16 +93,17 @@ def minim_peipline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'
       outfile: the output file name. Defaults to BindingEnergy.csv
     """
     simParas = paras['simulation']
-    gbsaParas = paras['GBSA']
+    pbsaParas = paras['PBSA']
 
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
     receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
 
     detalGdict = {'name':[]}
-    for k in gbsaParas['mode'].split('+'):
-        detalGdict[k.upper()] = []
-        detalGdict['%s_err'%k.upper()] = []
+    for k in ['GB','PB', 'gb', 'pb']:
+        if k in pbsaParas['modes']:
+            detalGdict[k.upper()] = []
+            detalGdict['%s_err'%k.upper()] = []
     
     cwd = os.getcwd()
     for ligandfile in ligandfiles:
@@ -97,8 +130,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'
         shutil.copy(topfile, outtop)
 
         indexfile = generate_index_file(grofile)
-        gbsaParas = paras['GBSA']
-        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, mode=gbsaParas['mode'], dec=gbsaParas['decomposition'], indi=gbsaParas['indi'], exdi=gbsaParas['exdi'])
+        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
@@ -108,7 +140,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'
     df = pd.DataFrame(detalGdict)
     df.to_csv(outfile, index=False)
 
-def md_pipeline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
+def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
     """
     The main function of this script
     
@@ -119,15 +151,16 @@ def md_pipeline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
       outfile: the output file name. Defaults to BindingEnergy.csv
     """
     simParas = paras['simulation']
-    gbsaParas = paras['GBSA']
+    pbsaParas = paras['PBSA']
 
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
     receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
     detalGdict = {'name':[]}
-    for k in gbsaParas['mode'].split('+'):
-        detalGdict[k.upper()] = []
-        detalGdict['%s_err'%k.upper()] = []
+    for k in ['GB','PB', 'gb', 'pb']:
+        if k in pbsaParas['modes']:
+            detalGdict[k.upper()] = []
+            detalGdict['%s_err'%k.upper()] = []
 
     cwd = os.getcwd()
     for ligandfile in ligandfiles:
@@ -160,7 +193,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, outfile='BindingEnergy.csv'):
         logging.info('Running GBSA: %s'%ligandName)
         indexfile = generate_index_file(grofile)
     
-        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, mode=gbsaParas['mode'], dec=gbsaParas['decomposition'], indi=gbsaParas['indi'], exdi=gbsaParas['exdi'])
+        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
@@ -177,6 +210,7 @@ def main():
     parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
     parser.add_argument('-c', dest='config', help='Configue file, default: %s'%DEFAULT_CONFIGURE_FILE, default=DEFAULT_CONFIGURE_FILE)
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
+    parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
 
     args = parser.parse_args()
@@ -196,6 +230,8 @@ def main():
     config = configparser.ConfigParser()
     config.read(conf)
 
+    mmpbsafile = os.path.abspath(args.pbsafile) if args.pbsafile else args.pbsafile
+
     paras = {
         'simulation':{
             'mode': config.get('simulation', 'mode', fallback='em'),
@@ -206,21 +242,15 @@ def main():
             'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
             'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
         },
-        'GBSA':{
-            'mode': config.get('GBSA', 'mode', fallback='gb'),
-            'GB-type': config.getint('GBSA', 'GB-type', fallback=5),
-            'PB-type': config.getint('GBSA', 'PB-type', fallback=2),
-            'decomposition': config.getboolean('GBSA', 'decomposition', fallback=False),
-            'indi': config.getfloat('GBSA', 'indi', fallback=1.0), # Internal dielectric constant
-            'exdi': config.getfloat('GBSA', 'exdi', fallback=80.0) # External dielectric constant
-        }
+        'PBSA':  {k:v for k,v in config.items('PBSA')}
     }
 
     if paras['simulation']['mode'] == 'em':
-        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile)
+        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
     elif paras['simulation']['mode'] == 'md':
-        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile)
-    
+        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
+    elif paras['simulation']['mode'] == 'input':
+        base_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
 
 if __name__ == "__main__":
     main()

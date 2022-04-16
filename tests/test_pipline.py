@@ -40,7 +40,7 @@ class TestPipline(unittest.TestCase):
         pdbfile, ligandfile, workdir = self.base(pdbfile, pdbfile)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'hmtpbsa-traj -i %s -p %s -ndx %s -m pb+gb -t %s -indi 1'%(pdbfile, topfile, indexfile, pdbfile)
+        cmd = 'hmtpbsa-traj -i %s -p %s -ndx %s -m pb gb -t %s '%(pdbfile, topfile, indexfile, pdbfile)
         RC = os.system(cmd)
         if RC != 0:
             EF = False

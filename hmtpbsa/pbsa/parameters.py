@@ -1,3 +1,4 @@
+from hmtpbsa.settings import PBSA_VERSION, PBSA_PARAMETER_FILE
 '''
 see the https://valdes-tresanco-ms.github.io/gmx_MMPBSA/input_file/#the-input-file
 '''
@@ -31,7 +32,7 @@ print_res="within 5"
 /
 '''
 
-def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate', decompose=False, indi=1.0, exdi=80.0) -> None:
+def generate_input_file_v143(pbsaParas, outfile='mmpbsa.in') -> None:
     """
     Generate a mmpbsa.in file for a given mode
     
@@ -51,31 +52,86 @@ def generate_input_file(mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1
     Returns:
       The name of the input file.
     """
+    mode = pbsaParas['mode'] 
+    name = ''
     modes = ['gb', 'pb', 'gb+pb', 'pb+gb']
     if mode not in modes:
         raise Exception('Unknown type of mode: %s'%mode)
     args = {
         'sysName':name+"_"+mode,
         'mode':mode,
-        "startFrame":startFrame,
-        "endFrame": endFrame,
-        "interval": interval,
-        "temperature": temperature,
-        "igbValue": igbValue,
-        "indi": indi,
-        "exdi": exdi,
+        "startFrame": pbsaParas['startFrame'] if 'startFrame' in pbsaParas  else 1,
+        "endFrame": pbsaParas['endFrame'] if 'endFrame' in pbsaParas  else 1,
+        "interval": pbsaParas['interval'] if 'interval' in pbsaParas  else 1,
+        "temperature": pbsaParas['temperature'] if 'temperature' in pbsaParas  else 300,
+        "igbValue": pbsaParas['igbValue'] if 'igbValue' in pbsaParas  else 2,
+        "indi": pbsaParas['indi'] if 'indi' in pbsaParas  else 1.0,
+        "exdi": pbsaParas['exdi'] if 'exdi' in pbsaParas  else 80.0,
     }
     line = generalstring.format(**args)
     if 'gb' in mode:
         line += gbstring.format(**args)
     if 'pb' in mode:
         line += pbstring.format(**args)
-    if decompose:
+    if "decompose" in pbsaParas and pbsaParas['decompose']:
         line += decostring
     with open(outfile, 'w') as fw:
         fw.write(line)
     return outfile
 
+def generate_input_file_v152(pbsaParas, outfile='mmpbsa.in'):
+    modes = pbsaParas['modes'].split(',') + ['general']
+    
+    with open (PBSA_PARAMETER_FILE) as fr:
+        lines = fr.readlines()
+    mode = None
+    MF = False
+    with open(outfile, 'w') as fw:
+        for line in lines:
+            line = line.strip()
+            if line.startswith('#') or not line:
+                continue
+            if line.startswith('&'):
+                if MF:
+                    fw.write('/\n\n')
+                    MF = False
+                mode = line.split('&')[1]
+                if mode in modes:
+                    fw.write(line+"\n")
+                    MF = True
+            elif mode in modes and '=' in line:
+                lineList = line.split('#')
+                comment = lineList[-1]
+                varlist = lineList[0].split('=')
+                varname = varlist[0].strip()
+                varvalue = varlist[1].strip()
+                if varname in pbsaParas:
+                    if '"' in varvalue:
+                        varvalue = "%s"%pbsaParas[varname].replace('"','')
+                line = '  %-21s= %-47s# %s\n'%(varname, varvalue, comment)
+                fw.write(line)
+        if MF:
+            fw.write('/\n')
+    return outfile
+
+def set_parameters(mmpbsafile, key, value):
+    with open(mmpbsafile) as fr:
+        lines = fr.readlines()
+    with open(mmpbsafile, 'w') as fw:
+        for line in lines:
+            if key in line:
+                lineList = line.strip().split(key)
+                if ',' in lineList[1]:
+                    tmp = lineList[1].split(',')
+                    line = lineList[0] + key +'=%s'%str(value) + ','.join(tmp[1:]) + '\n'
+                else:
+                    line = lineList[0] + key + '=%s'%str(value) + '\n'
+            fw.write(line)
+
+if PBSA_VERSION >=1.5:
+    generate_input_file = generate_input_file_v152
+else:
+    generate_input_file = generate_input_file_v143
 
 if __name__ == "__main__":
     pass
