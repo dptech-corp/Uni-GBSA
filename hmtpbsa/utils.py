@@ -68,9 +68,12 @@ def generate_index_file(complexfile):
         NACL += ' ! %d &'%groupdict['NA']
     if 'CL' in groupdict:
         NACL += ' ! %d'%groupdict['CL']
+    if 'non-Water' not in groupdict:
+        groupdict['non-Water'] = ''
+
     groupdict['NACL'] = NACL
     cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
-        {non-Water} & {NACL} & ! {LIGAND}
+        ! {LIGAND} & {NACL} & {non-Water}
         name {RECEPTOR} RECEPTOR
            q\nEOF'''.format(**groupdict)
     fr = os.popen(cmd)

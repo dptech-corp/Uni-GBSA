@@ -47,7 +47,7 @@ optional arguments:
 * If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
 ```Bash
 hmtpbsa-pipeline -h
-usage: hmtpbsa-pipeline [-h] -i RECEPTOR -l LIGAND [LIGAND ...] [-c CONFIG]
+usage: hmtpbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE]
 
 GBSA Calculation.
 
@@ -56,17 +56,20 @@ optional arguments:
   -i RECEPTOR           Input protein file with pdb format.
   -l LIGAND [LIGAND ...]
                         Ligand files to calculate binding energy.
-  -c CONFIG             Configue file, default: /opt/anaconda3/envs/amber/lib/python3.8/site-
-                        packages/hmtpbsa-0.0.2-py3.8.egg/hmtpbsa/data/detault.ini
+  -c CONFIG             Configue file, default: /opt/anaconda3/envs/amber/lib/python3.8/site-packages/hmtpbsa-0.0.2-py3.8.egg/hmtpbsa/data/default.ini
+  -d LIGDIR             Floder contains many ligand files. file format: .mol or .sdf
+  -f PBSAFILE           gmx_MMPBSA input file. default=None
+  -o OUTFILE            Output file.
 ```
 
 ## Example
-* Calculate PBSA value with ``hmtpbsa-traj``
-```Bash
-hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb+gb -t example/3f/complex.pdb
-```
 
 * Give a protein and some ligand files. Obtain the binding energy with ``hmtpbsa-pipeline``
 ````Bash
 hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ````
+
+* Calculate PBSA value with ``hmtpbsa-traj``
+```Bash
+hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
+```
