@@ -197,7 +197,9 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
 
         logging.info('Running GBSA: %s'%ligandName)
         indexfile = generate_index_file(grofile)
-    
+        
+        if 'startframe' not in pbsaParas:
+            pbsaParas["startframe"] = 2
         detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
