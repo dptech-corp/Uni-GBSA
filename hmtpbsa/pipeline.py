@@ -27,8 +27,13 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
       detal_G is a dictionary, the key is the mode, the value is a list, the first element is the
     average value, the second element is the standard deviation.
     """
+    reresfile = complexfile[:-4]+'_reres.pdb'
+    cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(complexfile, reresfile)
+    RC = os.system(cmd)
+    if RC!=0:
+       raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
-    pbsa.set_paras(complexfile=complexfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+    pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -123,7 +128,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='B
 
         minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
     
-        cmd = 'gmx editconf -f %s -o %s >/dev/null 2>&1'%(minimgro, grofile)
+        cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(minimgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
             raise Exception('Error conver %s to %s'%(minimgro, grofile))
@@ -180,9 +185,9 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         logging.info('Running simulation: %s'%ligandName)
         engine = GMXEngine()
     
-        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nstep=simParas['nstep'])
+        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nstep=simParas['nstep'], nframe=simParas['nframe'])
 
-        cmd = 'gmx editconf -f %s -o %s >/dev/null 2>&1'%(mdgro, grofile)
+        cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(mdgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
             raise Exception('Error conver %s to %s'%(mdgro, grofile))
@@ -239,6 +244,7 @@ def main():
             'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
             'conc': config.getfloat('simulation', 'conc', fallback=0.15),
             'nstep': config.getint('simulation', 'nstep', fallback=500000),
+            'nframe': config.getint('simulation', 'nframe', fallback=100),
             'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
             'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
         },

@@ -229,7 +229,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt)       
         return outfile
     
-    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=500000):
+    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=500000, nframe=100):
         """
         This function is used to generate a gromacs trajectory file from a pdb file
         
@@ -245,10 +245,14 @@ class GMXEngine(BaseObject):
         """
         mdmdpfile = 'md.mdp'
         fr = open(mdpfile)
+        if nframe > nstep:
+            nframe = nstep
         with open(mdmdpfile, 'w') as fw:
             for line in fr:
                 if line.startswith('nsteps'):
                     line = 'nsteps      =  %d\n' % nstep
+                elif line.startswith('nstxtcout'):
+                    line = 'nstxtcout    =  %d\n' %int(nstep/nframe)
                 fw.write(line)
         outtpr = self._grompp(pdbfile, topfile, 'md', mdmdpfile, maxwarn=2)
         grofile = self._mdrun(outtpr, nt)
@@ -349,7 +353,7 @@ class GMXEngine(BaseObject):
         os.chdir(cwd)
         return nptpdb, topfile
 
-    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nstep=500000):
+    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nstep=500000, nframe=100):
         """
         Runs a short MD simulation in a box of water
         
@@ -367,7 +371,7 @@ class GMXEngine(BaseObject):
         nptpdb, topfile = self.run_to_npt(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
         cwd = os.getcwd()
         os.chdir(rundir)
-        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=nstep)
+        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=nstep, nframe=nframe)
         mdgro, mdxtc, topfile = os.path.abspath(mdgro), mdxtc, os.path.abspath(topfile)
         os.chdir(cwd)
 
