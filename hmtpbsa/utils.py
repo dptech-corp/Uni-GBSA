@@ -55,8 +55,8 @@ def generate_index_file(complexfile, pbc=False):
         print(cmd)
         raise Exception('Error run make_ndx: \n%s'%text)
     groupdict = {
-        'CENTER': '',
-        'OUTPUT': ''
+        'center': '',
+        'output': ''
         }
     groupid = 0
     with open('index.ndx') as fr:
@@ -75,14 +75,14 @@ def generate_index_file(complexfile, pbc=False):
     if 'non-Water' not in groupdict:
         groupdict['non-Water'] = ''
     if pbc:
-        groupdict['CENTER'] = '2 \n name %d CENER'%(groupid+1)
-        groupdict['OUTPUT'] = '2|%d \n name %d OUTPUT'%(groupdict['RECEPTOR'], groupid+2)
+        groupdict['center'] = '2 \n name %d center'%(groupid+1)
+        groupdict['output'] = '2|%d \n name %d output'%(groupdict['RECEPTOR'], groupid+2)
     groupdict['NACL'] = NACL
     cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
         ! {LIGAND} & {NACL} & {non-Water}
         name {RECEPTOR} RECEPTOR
-        {CENTER}
-        {OUTPUT}
+        {center}
+        {output}
            q\nEOF'''.format(**groupdict)
     print(cmd)
     fr = os.popen(cmd)
@@ -95,7 +95,6 @@ def generate_index_file(complexfile, pbc=False):
     indexfile = os.path.abspath('index.ndx')
     return indexfile
 
-
 def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null"):
     fname = os.path.split(trajfile)[-1][:-4]
     suffix = os.path.split(trajfile)[-1][-4:]
@@ -107,8 +106,7 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     inf  = trajfile
     outf = '%s-1'%fname + suffix
     cmd = basecmd + '''-f %s -o %s -pbc mol -ur compact >> %s 2>&1 << EOF
-    output
-    EOF'''%(inf, outf, logfile)
+    output\nEOF'''%(inf, outf, logfile)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
@@ -119,8 +117,7 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     outf = '%s-2'%fname + suffix
     cmd = basecmd + '''-f %s -o %s -center >> %s 2>&1 <<EOF
     center
-    output
-    EOF'''%(inf, outf, logfile)
+    output\nEOF'''%(inf, outf, logfile)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
@@ -130,8 +127,7 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     inf = outf
     outf = '%s-3'%fname + suffix
     cmd = basecmd + '''-f %s -o %s -pbc res -ur compact >> %s 2>&1 <<EOF
-    output
-    EOF'''%(inf, outf, logfile)
+    output\nEOF'''%(inf, outf, logfile)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
@@ -141,8 +137,7 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     inf = outf
     outf = '%s-4'%fname + suffix
     cmd = basecmd + '''-f %s -o %s -pbc mol -ur compact >> %s 2>&1 <<EOF
-    output
-    EOF'''%(inf, outf, logfile)
+    output\nEOF'''%(inf, outf, logfile)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)

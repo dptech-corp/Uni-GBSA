@@ -20,6 +20,7 @@ setup(
     entry_points={'console_scripts': [
          'hmtpbsa-pipeline = hmtpbsa.pipeline:main',
          'hmtpbsa-traj = hmtpbsa.pbsa.pbsarun:main',
+         'hmtpbsa-pbc = hmtpbsa.CLI:PBC_main'
      ]},
     include_package_data=True
 )

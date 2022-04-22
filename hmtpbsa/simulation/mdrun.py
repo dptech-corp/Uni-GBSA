@@ -375,9 +375,9 @@ class GMXEngine(BaseObject):
         os.chdir(rundir)
         mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=nstep, nframe=nframe)
         indexfile = generate_index_file(mdgro, pbc=True)
-        mdxtcpbc = process_pbc('md.tpr', mdxtc, indexfile=indexfile)
-        mdgropbc = process_pbc('md.tpr', mdgro, indexfile=indexfile)
-        mdgro, mdxtc, topfile = os.path.abspath(mdgropbc), mdxtcpbc, os.path.abspath(topfile)
+        mdxtcpbc = process_pbc(mdxtc, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
+        mdgropbc = process_pbc(mdgro, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
+        mdgro, mdxtc, topfile = os.path.abspath(mdgropbc), os.path.abspath(mdxtcpbc), os.path.abspath(topfile)
         os.chdir(cwd)
 
         return mdgro, mdxtc, topfile
