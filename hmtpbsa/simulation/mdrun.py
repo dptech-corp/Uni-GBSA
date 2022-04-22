@@ -1,6 +1,8 @@
+from concurrent.futures import process
 import os
 import shutil
 from hmtpbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
+from hmtpbsa.utils import generate_index_file, process_pbc
 
 class BaseObject(object):
     pass
@@ -372,7 +374,10 @@ class GMXEngine(BaseObject):
         cwd = os.getcwd()
         os.chdir(rundir)
         mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=nstep, nframe=nframe)
-        mdgro, mdxtc, topfile = os.path.abspath(mdgro), mdxtc, os.path.abspath(topfile)
+        indexfile = generate_index_file(mdgro, pbc=True)
+        mdxtcpbc = process_pbc('md.tpr', mdxtc, indexfile=indexfile)
+        mdgropbc = process_pbc('md.tpr', mdgro, indexfile=indexfile)
+        mdgro, mdxtc, topfile = os.path.abspath(mdgropbc), mdxtcpbc, os.path.abspath(topfile)
         os.chdir(cwd)
 
         return mdgro, mdxtc, topfile
