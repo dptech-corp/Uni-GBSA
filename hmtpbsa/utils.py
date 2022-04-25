@@ -150,3 +150,4 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     os.system(cmd)
 
     return outfile
+
