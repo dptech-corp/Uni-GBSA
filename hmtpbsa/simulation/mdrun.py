@@ -3,6 +3,7 @@ import os
 import shutil
 from hmtpbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
 from hmtpbsa.utils import generate_index_file, process_pbc
+from hmtpbsa.simulation.utils import write_position_restrain
 
 class BaseObject(object):
     pass
@@ -150,7 +151,7 @@ class GMXEngine(BaseObject):
           a tuple with two elements. The first element is the name of the new pdb file, and the second
         element is the name of the new topology file.
         """
-        outfile = 'ions.gro'
+        outfile = 'ions.pdb'
         outtpr = self._grompp(pdbfile, topfile, 'ions', mdpfile)
         args = {
             'gmx': GMXEXE,
@@ -192,6 +193,59 @@ class GMXEngine(BaseObject):
         """
         outtpr = self._grompp(pdbfile, topfile, 'minim', mdpfile)
         outfile = self._mdrun(outtpr, nt)       
+        return outfile
+    
+    def gmx_genrestr_(self, pdbfile, groupName, outfile='posre.itp', indexfile=None, force=[1000,1000,1000]):
+        args = {
+            'gmx': GMXEXE,
+            'inputfile': pdbfile,
+            'outfile': outfile,
+            'forcex': force[0],
+            'forcey': force[1],
+            'forcez': force[2], 
+            'groupName':groupName,
+            'indexfile': '-n %s'%indexfile if indexfile else '',
+        }
+
+        cmd = '{gmx} genrestr -f {inputfile} -o {outfile} -fc {forcex} {forcey} {forcez} {indexfile} <<EOF\n{groupName}\nEOF\n '.format(**args)
+        RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
+        if RC != 0:
+            print(cmd)
+            os.system('tail %s -n 50'%self.gmxlog)
+            raise Exception('ERROR genrestr %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
+        return outfile
+
+    def gmx_minim_(self,  pdbfile, topfile, force=[1000, 1000, 1000], nt=OMP_NUM_THREADS):
+        
+        # step 1-1: steepest descent 500 step, all heavy atoms restrain at 2092 kJ/(mol * nm^2) = 5 kcal/(mol * A^2)
+        #indexfile = generate_index_file_for_restrain(pdbfile)
+        #self.gmx_genrestr_(pdbfile, 'all_heavy', outfile='s1-1.itp', force=force, indexfile=indexfile)
+        #os.system('rm posre.itp; ln -s s1-1.itp posre.itp')
+        topfile = write_position_restrain(topfile, 'topol_restrain.top', fc=force)
+        outtpr = self._grompp(pdbfile, topfile, 's1-1', os.path.join(MDPFILESDIR, 'minimization/s1-steep.mdp'))
+        outgro = self._mdrun(outtpr, nt=nt)
+
+        # step 1-2: conjugate gradint 500 step, all heavy atoms restrain at 2092 kJ/(mol * nm^2) = 5 kcal/(mol * A^2)
+        #outtpr = self._grompp(outgro, topfile, 's1-2', os.path.join(MDPFILESDIR, 'minimization/s1-cg.mdp'))
+        #outgro = self._mdrun(outtpr, nt=nt)
+
+        # step 2-1: steepest descent 500 step, complex heavy atoms restrain at 2092 kJ/(mol * nm^2) = 5 kcal/(mol * A^2)
+        #self.gmx_genrestr_(outgro, 'complex_heavy', outfile='s2-1.itp', force=force, indexfile=indexfile)
+        #os.system('rm posre.itp; ln -s s2.itp posre.itp')
+        outtpr= self._grompp(outgro, topfile, 's2-1', os.path.join(MDPFILESDIR, 'minimization/s2-steep.mdp'))
+        outgro = self._mdrun(outtpr, nt=nt)
+
+        # step 2-2: conjugate gradint 500 step, complex heavy atoms restrain at 2092 kJ/(mol * nm^2) = 5 kcal/(mol * A^2)
+        #outtpr = self._grompp(outgro, topfile, 's2-2', os.path.join(MDPFILESDIR, 'minimization/s2-cg.mdp'))
+        #outgro = self._mdrun(outtpr, nt=nt)
+
+        # step 3: steepest descent 1000 step, all atom relax
+        outtpr = self._grompp(outgro, topfile, 's3', os.path.join(MDPFILESDIR, 'minimization/s3-steep.mdp'))
+        outgro = self._mdrun(outtpr, nt=nt)
+
+        # step 6: conjugate gradint 4000 step, all atom relax
+        outtpr = self._grompp(outgro, topfile, 's4', os.path.join(MDPFILESDIR, 'minimization/s4-cg.mdp'))
+        outfile = self._mdrun(outtpr, nt=nt)
         return outfile
 
     def gmx_nvt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp')):
@@ -321,6 +375,17 @@ class GMXEngine(BaseObject):
         cwd = os.getcwd()
         os.chdir(rundir)
         minipdb = self.gmx_minim(ionspdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp'))
+        minipdb, topfile = os.path.abspath(minipdb), os.path.abspath(topfile)
+        os.chdir(cwd)
+        return minipdb, topfile
+    
+    def run_to_minim_pbsa(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15):
+        ionspdb, topfile = self.run_to_ions(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
+        if rundir is None:
+            rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
+        cwd = os.getcwd()
+        os.chdir(rundir)
+        minipdb = self.gmx_minim_(ionspdb, topfile, force=[1000, 1000, 1000], nt=OMP_NUM_THREADS)
         minipdb, topfile = os.path.abspath(minipdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return minipdb, topfile
