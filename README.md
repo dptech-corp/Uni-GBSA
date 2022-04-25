@@ -23,6 +23,25 @@ python setup.py install
 ```
 
 ## Usage
+
+* If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
+```Bash
+hmtpbsa-pipeline -h
+usage: hmtpbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE]
+
+GBSA Calculation.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i RECEPTOR           Input protein file with pdb format.
+  -l LIGAND [LIGAND ...]
+                        Ligand files to calculate binding energy.
+  -c CONFIG             Configue file, default: /opt/anaconda3/envs/amber/lib/python3.8/site-packages/hmtpbsa-0.0.2-py3.8.egg/hmtpbsa/data/default.ini
+  -d LIGDIR             Floder contains many ligand files. file format: .mol or .sdf
+  -f PBSAFILE           gmx_MMPBSA input file. default=None
+  -o OUTFILE            Output file.
+```
+
 * If you have the gromacs topology and index files. Just use the ``hmtpbsa-traj``
 ````
 hmtpbsa-traj -h
@@ -43,24 +62,6 @@ optional arguments:
   -D                    DEBUG model, keep all the files.
 ````
 
-
-* If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
-```Bash
-hmtpbsa-pipeline -h
-usage: hmtpbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE]
-
-GBSA Calculation.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -i RECEPTOR           Input protein file with pdb format.
-  -l LIGAND [LIGAND ...]
-                        Ligand files to calculate binding energy.
-  -c CONFIG             Configue file, default: /opt/anaconda3/envs/amber/lib/python3.8/site-packages/hmtpbsa-0.0.2-py3.8.egg/hmtpbsa/data/default.ini
-  -d LIGDIR             Floder contains many ligand files. file format: .mol or .sdf
-  -f PBSAFILE           gmx_MMPBSA input file. default=None
-  -o OUTFILE            Output file.
-```
 
 ## Example
 
