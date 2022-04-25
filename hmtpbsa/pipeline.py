@@ -126,7 +126,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='B
         logging.info('Running energy minimization: %s'%ligandName)
         engine = GMXEngine()
 
-        minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
+        minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
     
         cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(minimgro, grofile)
         RC = os.system(cmd)
