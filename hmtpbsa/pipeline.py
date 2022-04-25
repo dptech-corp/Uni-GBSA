@@ -27,6 +27,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
       detal_G is a dictionary, the key is the mode, the value is a list, the first element is the
     average value, the second element is the standard deviation.
     """
+
     reresfile = complexfile[:-4]+'_reres.pdb'
     cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(complexfile, reresfile)
     RC = os.system(cmd)
@@ -34,6 +35,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
     pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -86,6 +88,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bi
         os.chdir(cwd)
     df = pd.DataFrame(detalGdict)
     df.to_csv(outfile, index=False)
+
 
 def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
     """
@@ -200,6 +203,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
+
         detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
