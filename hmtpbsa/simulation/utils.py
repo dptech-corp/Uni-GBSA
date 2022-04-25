@@ -67,3 +67,94 @@ def load_position_restraints(topfile, outfile=None):
         else:
             fw.write(line)
 
+def generate_index_file_for_restrain(complexfile):
+    cmd = '''gmx make_ndx -f %s 2>&1 << EOF
+           name 2 LIGAND
+           q
+        EOF ''' % complexfile
+    fr = os.popen(cmd)
+    text = fr.read().strip()
+    if 'Error' in text:
+        print(cmd)
+        raise Exception('Error run make_ndx: \n%s'%text)
+    groupdict = {
+        }
+    groupid = 0
+    with open('index.ndx') as fr:
+        for line in fr:
+            if line.startswith('['):
+                tmp = line.split()
+                groupdict[tmp[1]] = groupid
+                groupid += 1
+    groupdict['RECEPTOR'] = groupid
+    groupdict['H_atoms'] = groupid + 1
+    groupdict['all_heavy'] = groupid + 2
+    groupdict['complex_heavy'] = groupid + 3
+    groupdict['complexfile'] = complexfile
+    NACL = ''
+    if 'NA' in groupdict:
+        NACL += ' ! %d &'%groupdict['NA']
+    if 'CL' in groupdict:
+        NACL += ' ! %d'%groupdict['CL']
+    if 'non-Water' not in groupdict:
+        groupdict['non-Water'] = ''
+
+    groupdict['NACL'] = NACL
+    cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
+        ! {LIGAND} & {NACL} & {non-Water}
+        name {RECEPTOR} RECEPTOR
+        {NACL} & a H*
+        name {H_atoms} H_atoms
+        ! a H*
+        name {all_heavy} all_heavy
+        {LIGAND} | {RECEPTOR} & ! {H_atoms}
+        name {complex_heavy} complex_heavy
+
+           q\nEOF'''.format(**groupdict)
+    #print(cmd)
+    fr = os.popen(cmd)
+    text = fr.read().strip()
+    if 'Error' in text:
+        print(cmd)
+        raise Exception('Error run make_ndx: \n%s'%text)
+    #shutil.rmtree('#index.ndx.1#')
+    os.system('rm \#*')
+    indexfile = os.path.abspath('index.ndx')
+    return indexfile
+
+def write_position_restrain(topfile, outfile=None, fc=[1000, 1000, 1000], excludes=['NA','CL']):
+    if outfile is None:
+        outfile = topfile
+    with open(topfile) as fr:
+        lines = fr.readlines()
+    watersName = ['SOL', 'TIP3P']
+    fw = open(outfile, 'w')
+    positionRestrain = []
+    moleculeName = None
+    linetype = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith('['):
+            linetype = line.split('[')[-1].split(']')[0].strip()
+            if linetype == 'moleculetype' and len(positionRestrain)>0:
+                if moleculeName in watersName:
+                    fw.write('#ifdef POSRES_H2O\n[ position_restraints ]\n;  i funct       fcx        fcy        fcz\n')
+                else:
+                    fw.write('#ifdef POSRES_HEAVY\n[ position_restraints ]\n;  i funct       fcx        fcy        fcz\n')
+                fw.writelines(positionRestrain)
+                fw.write('#endif\n\n')
+                positionRestrain = []
+        elif line.strip().startswith('#'):
+            linetype = 'define'
+        elif line.strip() and not line.strip().startswith(';'):
+            if linetype == 'moleculetype':
+                    moleculeName = line.strip().split()[0]
+                    if moleculeName in excludes:
+                        moleculeName = None
+            elif moleculeName and linetype == 'atoms':
+                lineList = line.strip().split()
+                atomindex, atomtype = lineList[0], lineList[1].upper()
+                if not atomtype.startswith('H'):
+                    positionRestrain.append('%5s   1   %5d %5d %5d\n'%(atomindex, fc[0], fc[1], fc[2]))
+        fw.write(line)
+    fw.close()
+    return outfile

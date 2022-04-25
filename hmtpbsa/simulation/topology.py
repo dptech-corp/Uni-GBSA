@@ -8,8 +8,7 @@ from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype
 
-
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", clean=True):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", clean=True, outtop=None, outcoord=None):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -50,12 +49,14 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     os.chdir('MOL.acpype')
     moltop = pmd.load_file('MOL_GMX.top')
     molgro = pmd.load_file('MOL_GMX.gro', structure=True)
+    if outtop:
+        moltop.write(outtop)
     os.chdir(cwd)
     if clean:
         shutil.rmtree(ligandName)
     return moltop, molgro
 
-def build_protein(pdbfile, forcefield='amber99sb-ildn'):
+def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=None):
     """
     Build a protein topology and coordinate file from a PDB file
     
@@ -97,6 +98,13 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn'):
     protgro = pmd.load_file('1-pdb2gmx.pdb', structure=True)
     #load_position_restraints('topol.top')
     prottop  = pmd.load_file('topol.top')
+    if outtop:
+        prottop.write(outtop)
+    if outcoord:
+        if outcoord[-4:] != '.pdb':
+            outcoord = outcoord[:-4] + '.pdb'
+        protgro.write_pdb(outcoord)
+
     os.chdir(cwd)
     shutil.rmtree(proteinName)
     return prottop, protgro
@@ -121,11 +129,14 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
 
     if isinstance(ligand, str):
         moltop, molgro = build_lignad(ligand, forcefield=ligandforce)
-    else:
+    elif ligand:
         moltop, molgro = ligand
 
-    systop = moltop + prottop
-    sysgro = molgro + protgro
+    if ligand is None:
+        systop, sysgro = prottop, protgro
+    else:
+        systop = moltop + prottop
+        sysgro = molgro + protgro
     systop.write(outtop)
     sysgro.write_pdb(outpdb)
     lines = []
@@ -135,7 +146,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         for line in fr:
             if line.startswith('[') and line.split()[1]=='molecules':
                 CF = 3
-                lines.append('\n; Include Position restraint file\n#ifdef POSRES\n#endif\n')
+                lines.append('\n; Include Position restraint file\n#ifdef POSRES\n\n#endif\n')
             if line.startswith(records) and CF:
                 tmp = line.strip().split()
                 molname, molnum = tmp[0], int(tmp[1])-1
