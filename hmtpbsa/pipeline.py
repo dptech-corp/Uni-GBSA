@@ -2,6 +2,7 @@ import os
 import shutil
 import argparse
 import configparser
+from tabnanny import verbose
 import pandas as pd
 
 from hmtpbsa.pbsa.pbsarun import PBSA
@@ -10,7 +11,7 @@ from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.topology import build_topol, build_protein
 from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE
 
-def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, debug=False):
+def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, verbose=False):
     """
     A pipeline for calculate GBSA/PBSA for trajectory
     
@@ -35,15 +36,14 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
     pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
-
-    pbsa.run(verbose=debug)
+    pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
     for k, v in detal_G.items():
         print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
     return detal_G
 
-def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
+def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv', verbose=False):
     """
     This function takes a receptorfile and ligandfile, and build a complex.pdb and complex.top file
     
@@ -80,7 +80,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bi
 
         indexfile = generate_index_file(grofile)
         pbsaParas = paras['PBSA']
-        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
@@ -90,7 +90,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bi
     df.to_csv(outfile, index=False)
 
 
-def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
+def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv', verbose=False):
     """
     It runs the simulation pipeline for each ligand.
     
@@ -138,17 +138,18 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='B
         shutil.copy(topfile, outtop)
 
         indexfile = generate_index_file(grofile)
-        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
             detalGdict["%s_err"%k.upper()].append(v[1])
-        engine.clean(pdbfile=grofile)
+        if not verbose:
+            engine.clean(pdbfile=grofile)
         os.chdir(cwd)
     df = pd.DataFrame(detalGdict)
     df.to_csv(outfile, index=False)
 
-def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
+def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv', verbose=False):
     """
     The main function of this script
     
@@ -198,18 +199,17 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         shutil.copy(topfile, outtop)
         shutil.copy(mdxtc, xtcfile)
 
-        logging.info('Running GBSA: %s'%ligandName)
+        #logging.info('Running GBSA: %s'%ligandName)
         indexfile = generate_index_file(grofile)
-        
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
-
-        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
             detalGdict[k.upper()].append(v[0])
             detalGdict["%s_err"%k.upper()].append(v[1])
-        engine.clean(pdbfile=grofile)
+        if not verbose:
+            engine.clean(pdbfile=grofile)
         os.chdir(cwd)
     df = pd.DataFrame(detalGdict)
     df.to_csv(outfile, index=False)
@@ -223,9 +223,10 @@ def main():
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
+    parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
-    receptor, ligands, conf, ligdir, outfile = args.receptor, args.ligand, args.config, args.ligdir, args.outfile
+    receptor, ligands, conf, ligdir, outfile, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.verbose
     
     if ligands is None:
         ligands = []
@@ -258,11 +259,11 @@ def main():
     }
 
     if paras['simulation']['mode'] == 'em':
-        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
+        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
     elif paras['simulation']['mode'] == 'md':
-        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
+        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
     elif paras['simulation']['mode'] == 'input':
-        base_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile)
+        base_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
 
 if __name__ == "__main__":
     main()
