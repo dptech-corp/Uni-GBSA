@@ -84,6 +84,7 @@ def generate_index_file(complexfile, pbc=False):
         {center}
         {output}
            q\nEOF'''.format(**groupdict)
+    print(cmd)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
