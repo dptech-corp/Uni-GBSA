@@ -27,7 +27,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
       detal_G is a dictionary, the key is the mode, the value is a list, the first element is the
     average value, the second element is the standard deviation.
     """
-<<<<<<< HEAD
+
     reresfile = complexfile[:-4]+'_reres.pdb'
     cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(complexfile, reresfile)
     RC = os.system(cmd)
@@ -35,10 +35,6 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
     pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
-=======
-    pbsa = PBSA()
-    pbsa.set_paras(complexfile=complexfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
->>>>>>> ad05162b13ddc99868dfc02696809fece0c139e3
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -91,6 +87,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bi
         os.chdir(cwd)
     df = pd.DataFrame(detalGdict)
     df.to_csv(outfile, index=False)
+
 
 def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='BindingEnergy.csv'):
     """
@@ -203,12 +200,19 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         logging.info('Running GBSA: %s'%ligandName)
         indexfile = generate_index_file(grofile)
 <<<<<<< HEAD
+<<<<<<< HEAD
         
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
 =======
     
 >>>>>>> ad05162b13ddc99868dfc02696809fece0c139e3
+=======
+        
+        if 'startframe' not in pbsaParas:
+            pbsaParas["startframe"] = 2
+
+>>>>>>> 38d175a10dfc92661cc78f5db5a34dc2d99a0dc0
         detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
