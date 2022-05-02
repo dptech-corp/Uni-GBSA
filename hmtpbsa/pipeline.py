@@ -201,6 +201,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         indexfile = generate_index_file(grofile)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
@@ -208,11 +209,16 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
     
 >>>>>>> ad05162b13ddc99868dfc02696809fece0c139e3
 =======
+=======
+>>>>>>> 602f0e39d6ba228069b3f62b3bf251a309ddecf2
         
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
 
+<<<<<<< HEAD
 >>>>>>> 38d175a10dfc92661cc78f5db5a34dc2d99a0dc0
+=======
+>>>>>>> 602f0e39d6ba228069b3f62b3bf251a309ddecf2
         detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
         detalGdict['name'].append(ligandName)
         for k,v in detalG.items():
