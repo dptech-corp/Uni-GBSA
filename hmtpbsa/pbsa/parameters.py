@@ -106,15 +106,10 @@ def generate_input_file_v152(pbsaParas, outfile='mmpbsa.in'):
                 varname = varlist[0].strip()
                 varvalue = varlist[1].strip()
                 if varname in pbsaParas:
-<<<<<<< HEAD
                     if '"' in varvalue or "'" in varvalue:
                         varvalue = '"%s"'%pbsaParas[varname].replace('"','')
                     else:
                         varvalue = pbsaParas[varname]
-=======
-                    if '"' in varvalue:
-                        varvalue = "%s"%pbsaParas[varname].replace('"','')
->>>>>>> ad05162b13ddc99868dfc02696809fece0c139e3
                 line = '  %-21s= %-47s# %s\n'%(varname, varvalue, comment)
                 fw.write(line)
         if MF:
