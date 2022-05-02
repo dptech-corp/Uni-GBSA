@@ -74,11 +74,9 @@ def generate_index_file(complexfile, pbc=False):
         NACL += ' ! %d'%groupdict['CL']
     if 'non-Water' not in groupdict:
         groupdict['non-Water'] = ''
-
     if pbc:
         groupdict['center'] = '2 \n name %d center'%(groupid+1)
         groupdict['output'] = '2|%d \n name %d output'%(groupdict['RECEPTOR'], groupid+2)
-
     groupdict['NACL'] = NACL
     cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
         ! {LIGAND} & {NACL} & {non-Water}
@@ -86,7 +84,7 @@ def generate_index_file(complexfile, pbc=False):
         {center}
         {output}
            q\nEOF'''.format(**groupdict)
-    print(cmd)
+    #print(cmd)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
@@ -152,3 +150,4 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     os.system(cmd)
 
     return outfile
+

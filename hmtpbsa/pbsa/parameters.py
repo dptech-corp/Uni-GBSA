@@ -81,7 +81,10 @@ def generate_input_file_v143(pbsaParas, outfile='mmpbsa.in') -> None:
 
 def generate_input_file_v152(pbsaParas, outfile='mmpbsa.in'):
     modes = pbsaParas['modes'].split(',') + ['general']
-    
+    if 'indi' in pbsaParas:
+        pbsaParas["intdiel"] = pbsaParas['indi']
+    if 'exdi' in pbsaParas:
+        pbsaParas['extdiel'] = pbsaParas['exdi']
     with open (PBSA_PARAMETER_FILE) as fr:
         lines = fr.readlines()
     mode = None
