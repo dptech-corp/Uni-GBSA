@@ -6,7 +6,7 @@ import parmed as pmd
 
 from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype
+from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype, write_position_restrain
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", clean=True, outtop=None, outcoord=None):
     """
@@ -161,6 +161,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
     with open(outtop, 'w') as fw:
         for line in lines:
             fw.write(line)
+    write_position_restrain(outtop)
 
 def main():
     pdbfile, ligandfile = sys.argv[1], sys.argv[2]
