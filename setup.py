@@ -23,6 +23,7 @@ setup(
          'hmtpbsa-pbc = hmtpbsa.CLI:PBC_main',
          'hmtpbsa-buildtop = hmtpbsa.CLI:topol_builder',
          'hmtpbsa-buildsys = hmtpbsa.CLI:simulation_builder',
+         'hmtpbsa-md = hmtpbsa.CLI:simulation_run',
      ]},
     include_package_data=True
 )
