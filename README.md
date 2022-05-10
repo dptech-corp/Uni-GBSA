@@ -65,7 +65,7 @@ optional arguments:
 
 ## Example
 
-* Give a protein and some ligand files. Obtain the binding energy with ``hmtpbsa-pipeline``
+* Give a protein and some ligand files. Obtain the PBSA with ``hmtpbsa-pipeline``
 ````Bash
 hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ````
@@ -74,3 +74,15 @@ hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ```Bash
 hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
 ```
+
+* Build topology for protein or ligand by gromacs. ``hmtpbsa-buildtop``
+```bash
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
+```
+
+* Run MD simulation with ``hmtpbsa-md``
+
+* Process PBC condition with ``hmtpbsa-pbc``
+
+* Build simulation system with ``hmtpbsa-buildsys``
