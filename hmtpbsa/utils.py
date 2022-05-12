@@ -1,6 +1,6 @@
 import os
 import shutil
-from hmtpbsa.settings import logging
+from hmtpbsa.settings import logging, GMXEXE
 
 def obtain_id_from_index(indexFile):
     """
@@ -45,10 +45,10 @@ def generate_index_file(complexfile, pbc=False):
       The index file is being returned.
     """
     
-    cmd = '''gmx make_ndx -f %s 2>&1 << EOF
+    cmd = '''%s make_ndx -f %s 2>&1 << EOF
            name 2 LIGAND
            q
-        EOF ''' % complexfile
+        EOF ''' % (GMXEXE, complexfile)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
@@ -56,7 +56,8 @@ def generate_index_file(complexfile, pbc=False):
         raise Exception('Error run make_ndx: \n%s'%text)
     groupdict = {
         'center': '',
-        'output': ''
+        'output': '',
+        'gmx':GMXEXE
         }
     groupid = 0
     with open('index.ndx') as fr:
@@ -78,7 +79,7 @@ def generate_index_file(complexfile, pbc=False):
         groupdict['center'] = '2 \n name %d center'%(groupid+1)
         groupdict['output'] = '2|%d \n name %d output'%(groupdict['RECEPTOR'], groupid+2)
     groupdict['NACL'] = NACL
-    cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
+    cmd = '''{gmx} make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
         ! {LIGAND} & {NACL} & {non-Water}
         name {RECEPTOR} RECEPTOR
         {center}
@@ -100,7 +101,7 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     suffix = os.path.split(trajfile)[-1][-4:]
     if outfile is None:
         outfile = '%s-pbc'%fname + suffix
-    basecmd = 'gmx trjconv -s %s -n %s '%(tprfile, indexfile)
+    basecmd = '%s trjconv -s %s -n %s '%(GMXEXE, tprfile, indexfile)
     cleanfiles = []
     ## step 1:
     inf  = trajfile
