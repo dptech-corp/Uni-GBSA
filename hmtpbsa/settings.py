@@ -13,11 +13,11 @@ PBSA_PARAMETER_FILE = os.path.dirname(os.path.abspath(__file__))+ '/data/mmpbsa.
 
 # base configure
 def find_gmx():
-    RC = os.system('gmx -h')
+    RC = os.system('gmx -h >/dev/null 2>&1')
     if RC == 0:
         return 'gmx'
-    RC = os.system('gmx_mpi -h')
-    if RC != 0:
+    RC = os.system('gmx_mpi -h >/dev/null 2>&1')
+    if RC == 0:
         return 'gmx_mpi'
     logging.error('Not found gmx or gmx_mpi.')
     exit(1)

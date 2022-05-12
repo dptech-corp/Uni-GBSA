@@ -9,7 +9,7 @@ from hmtpbsa.pbsa.pbsarun import PBSA
 from hmtpbsa.utils import generate_index_file
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.topology import build_topol, build_protein
-from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE
+from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE
 
 def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, verbose=False):
     """
@@ -30,7 +30,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     """
 
     reresfile = complexfile[:-4]+'_reres.pdb'
-    cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(complexfile, reresfile)
+    cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, complexfile, reresfile)
     RC = os.system(cmd)
     if RC!=0:
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
@@ -131,7 +131,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='B
 
         minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
     
-        cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(minimgro, grofile)
+        cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
             raise Exception('Error conver %s to %s'%(minimgro, grofile))
@@ -191,7 +191,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
     
         mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nstep=simParas['nstep'], nframe=simParas['nframe'])
 
-        cmd = 'gmx editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(mdgro, grofile)
+        cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, mdgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
             raise Exception('Error conver %s to %s'%(mdgro, grofile))

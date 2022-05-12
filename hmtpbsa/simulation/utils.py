@@ -1,6 +1,6 @@
 
 import os
-
+from hmtpbsa.settings import GMXEXE
 def convert_to_mol2(inputfile, filetype, outfile=None):
     """
     Convert a file of type filetype to mol2 format
@@ -68,16 +68,17 @@ def load_position_restraints(topfile, outfile=None):
             fw.write(line)
 
 def generate_index_file_for_restrain(complexfile):
-    cmd = '''gmx make_ndx -f %s 2>&1 << EOF
+    cmd = '''%s make_ndx -f %s 2>&1 << EOF
            name 2 LIGAND
            q
-        EOF ''' % complexfile
+        EOF ''' % ( GMXEXE, complexfile )
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
         print(cmd)
         raise Exception('Error run make_ndx: \n%s'%text)
     groupdict = {
+        'gmx':GMXEXE
         }
     groupid = 0
     with open('index.ndx') as fr:
@@ -100,7 +101,7 @@ def generate_index_file_for_restrain(complexfile):
         groupdict['non-Water'] = ''
 
     groupdict['NACL'] = NACL
-    cmd = '''gmx make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
+    cmd = '''{gmx} make_ndx -f {complexfile} -n index.ndx 2>&1 <<EOF
         ! {LIGAND} & {NACL} & {non-Water}
         name {RECEPTOR} RECEPTOR
         {NACL} & a H*
