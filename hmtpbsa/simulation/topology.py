@@ -8,7 +8,7 @@ from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype, write_position_restrain
 
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", clean=True, outtop=None, outcoord=None):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -52,7 +52,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     if outtop:
         moltop.write(outtop)
     os.chdir(cwd)
-    if clean:
+    if not verbose:
         shutil.rmtree(ligandName)
     return moltop, molgro
 
@@ -109,7 +109,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     shutil.rmtree(proteinName)
     return prottop, protgro
 
-def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2'):
+def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', verbose=False):
     """
     Build a topology file for a protein-ligand system
     
@@ -128,7 +128,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = receptor
 
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce)
+        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 

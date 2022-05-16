@@ -33,10 +33,11 @@ def topol_builder():
     parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
     parser.add_argument('-o', dest='outdir', help='A output directory.', default='GMXtop')
     parser.add_argument('-c', help='Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True', action='store_true', default=True)
-    
+    parser.add_argument('-verbose', help='Keep the directory or not.', default=False, action='store_true')
     args = parser.parse_args()
     protein, ligand, outdir, cF = args.protein, args.ligand, args.outdir, args.c
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
+    verbose = args.verbose
     if not protein and not ligand:
         print('Not found input file!')
 
@@ -69,7 +70,7 @@ def topol_builder():
         ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord)
         if cF:
             comxtop, comxcoord = os.path.join(outdir, "%s_%s.top"%(proteinName, ligandName)), os.path.join(outdir, "%s_%s.pdb"%(proteinName, ligandName))
-            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord)
+            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose)
 
 def simulation_builder():
     parser = argparse.ArgumentParser(description='Build MD simulation for input file.')
