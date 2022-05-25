@@ -1,41 +1,9 @@
-FROM continuumio/miniconda3
-# install
-RUN apt-get update -y && \
-	apt-get install gromacs -y && \ 
-	apt-get install vim -y && \
-        rm -rf /var/lib/apt/lists/*
-# python env
-RUN conda create -n amber21 python=3.9 \
-                            ambertools=21 \
-                            pip=22.0.3 \
-                            mdanalysis=2.0.0 \
-                            pdb2pqr=3.4.1 \
-                            pytest=6.2.5 \
-                            pytest-cov=3.0.0 \
-                            pylint=2.12.2 \
-                            acpype=2021.02 \
-                            -c conda-forge -y && \
-                            # clean up
-                            rm -rf /opt/conda/pkgs/*
+FROM dockerymh/hmtpbsa:gmx
 
-
-ENV PATH /opt/conda/bin:$PATH
-
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-
-RUN conda init bash \
-&& echo "conda activate amber21" >> ~/.bashrc
-
-RUN echo "dash dash/sh boolean false" | debconf-set-selections
-RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
-
-RUN source ~/.bashrc                 &&\
-#    pip install acpype               && \
-    pip install gmx_MMPBSA==1.5.2  --no-dependencies
-RUN source ~/.bashrc                 &&\
-    cp ./ /data/                     && \
+RUN cp ./ /data/                     && \
     cd /data/                        && \ 
     python setup.py install          && \
     rm -rf /data/*
 
 RUN echo `which python`
+RUN hmtpbsa-pipeline -h
