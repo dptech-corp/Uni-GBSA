@@ -21,7 +21,7 @@ RUN conda create -n amber21 python=3.9 \
 # add env
 RUN echo "source activate amber21" >> ~/.bashrc
 
-CMD ["/bin/bash"]
+SHELL ["/bin/bash", "-c"]
 RUN source activate amber21           && \
 #    pip install acpype               && \
     pip install gmx_MMPBSA==1.5.2    && \
