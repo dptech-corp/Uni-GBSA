@@ -17,15 +17,24 @@ RUN conda create -n amber21 python=3.9 \
                             -c conda-forge -y && \
                             # clean up
                             rm -rf /opt/conda/pkgs/*
-                            
-# add env
-RUN echo "source activate amber21" >> ~/.bashrc
 
-SHELL ["/bin/bash", "-c"]
-RUN source activate amber21           && \
+
+ENV PATH /opt/conda/bin:$PATH
+
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+RUN conda init bash \
+&& echo "conda activate amber21" >> ~/.bashrc
+
+RUN echo "dash dash/sh boolean false" | debconf-set-selections
+RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
+
+RUN source ~/.bashrc \
 #    pip install acpype               && \
     pip install gmx_MMPBSA==1.5.2    && \
     cp ./ /data/                     && \
     cd /data/                        && \ 
     python setup.py install          && \
     rm -rf /data/*
+
+RUN echo `which python`
