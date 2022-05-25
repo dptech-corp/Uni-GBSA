@@ -1,7 +1,7 @@
 FROM docker.io/dpzhengh/hmtpbsa:hmtpbsa-v1
 
 SHELL ["/bin/bash", "-c"]
-RUN echo "source activate amber21" > ~/.bashrc
+RUN echo "source activate amber21" >> ~/.bashrc
 
 RUN conda activate amber21           && \
     pip install acpype               && \
