@@ -1,7 +1,8 @@
 FROM docker.io/dpzhengh/hmtpbsa:hmtpbsa-v1
 
-RUN /bin/bash -c "source ~/.bashrc"  && \
-    conda activate amber21           && \
+SHELL ["conda", "run", "-n", "amber21", "/bin/bash", "-c"]
+
+RUN conda activate amber21           && \
     pip install acpype               && \
     pip install gmx_MMPBSA==1.5.2    && \
     cp ./ /data/                     && \
