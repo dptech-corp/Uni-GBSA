@@ -31,7 +31,7 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 
 RUN source ~/.bashrc                 &&\
 #    pip install acpype               && \
-    pip install gmx_MMPBSA==1.5.2  
+    pip install gmx_MMPBSA==1.5.2  --no-dependencies
 RUN source ~/.bashrc                 &&\
     cp ./ /data/                     && \
     cd /data/                        && \ 
