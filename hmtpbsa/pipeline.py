@@ -35,7 +35,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     if RC!=0:
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
-    pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
+    mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -129,7 +129,8 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='B
         logging.info('Running energy minimization: %s'%ligandName)
         engine = GMXEngine()
 
-        minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
+        #minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
+        minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'])
     
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
         RC = os.system(cmd)
@@ -189,7 +190,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, outfile='Bind
         logging.info('Running simulation: %s'%ligandName)
         engine = GMXEngine()
     
-        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nstep=simParas['nstep'], nframe=simParas['nframe'])
+        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nsteps=simParas['nsteps'], nframe=simParas['nframe'], eqsteps=simParas['eqsteps'])
 
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, mdgro, grofile)
         RC = os.system(cmd)
@@ -223,6 +224,7 @@ def main():
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
+    parser.add_argument('--mode', help='Calculation mode, use input file or minimization file or MD simulation file to calculate GBSA. default:None', choices=[None, 'input', 'em', 'md' ],default=None)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
@@ -250,13 +252,17 @@ def main():
             'boxtype' : config.get('simulation', 'boxtype', fallback='triclinic'),
             'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
             'conc': config.getfloat('simulation', 'conc', fallback=0.15),
-            'nstep': config.getint('simulation', 'nstep', fallback=500000),
+            'nsteps': config.getint('simulation', 'nsteps', fallback=500000),
             'nframe': config.getint('simulation', 'nframe', fallback=100),
+            'eqsteps': config.getint('simulation', 'eqsteps', fallback=50000),
             'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
             'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
+            'maxsol': config.getint('simulation', 'maxsol', fallback=0),
         },
         'PBSA':  {k:v for k,v in config.items('PBSA')}
     }
+    if args.mode:
+        paras['simulation']['mode'] = args.mode
 
     if paras['simulation']['mode'] == 'em':
         minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)

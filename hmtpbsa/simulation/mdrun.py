@@ -40,6 +40,7 @@ class GMXEngine(BaseObject):
             'mdpfile': mdpfile,
             'maxwarn': maxwarn
         }
+        #shutil.copy(mdpfile, os.path.split(mdpfile)[-1])
         cmd = '{gmx} grompp -f {mdpfile} -c {inputfile} -r {inputfile} -o {outputfile} -p {topfile} -maxwarn {maxwarn} '.format(**args)
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:
@@ -48,7 +49,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR run grompp %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outtpr
     
-    def _mdrun(self, tprfile, nt=OMP_NUM_THREADS):
+    def _mdrun(self, tprfile, nt=OMP_NUM_THREADS, nsteps=None):
         """
         The function takes a tpr file and runs md
         
@@ -70,6 +71,8 @@ class GMXEngine(BaseObject):
             cmd = 'mpirun --allow-run-as-root -n {nt} {gmx} mdrun -v -deffnm {jobname}'.format(**args)
         else:
             cmd = '{gmx} mdrun -v -deffnm {jobname} -nt {nt} -ntmpi 1 '.format(**args)
+        if nsteps:
+            cmd += ' -nsteps %d'%nsteps
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:
             print(cmd)
@@ -130,7 +133,7 @@ class GMXEngine(BaseObject):
             'topfile': topfile
         }
         cmd = '{gmx} solvate -cp {inputfile} -cs {watergro} -o {outputfile} -p {topfile} '.format(**args)
-        if maxsol:
+        if maxsol==0 or maxsol:
             cmd += '-maxsol %d '%maxsol
         RC = os.system(cmd+'>>%s 2>&1'%self.gmxlog)
         if RC != 0:
@@ -250,7 +253,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt=nt)
         return outfile
 
-    def gmx_nvt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp')):
+    def gmx_nvt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=None):
         """
         1. grompp: generate tpr file from pdb and topology files
         2. mdrun: run the simulation using the tpr file
@@ -267,10 +270,10 @@ class GMXEngine(BaseObject):
           The output file from the last function call.
         """
         outtpr = self._grompp(pdbfile, topfile, 'nvt', mdpfile, maxwarn=2)
-        outfile = self._mdrun(outtpr, nt)       
+        outfile = self._mdrun(outtpr, nt, nsteps=nsteps)       
         return outfile
     
-    def gmx_npt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp')):
+    def gmx_npt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=None):
         """
         This function runs gromacs npt simulation
         
@@ -284,10 +287,10 @@ class GMXEngine(BaseObject):
           The output file from the last function call.
         """
         outtpr = self._grompp(pdbfile, topfile, 'npt', mdpfile, maxwarn=2)
-        outfile = self._mdrun(outtpr, nt)       
+        outfile = self._mdrun(outtpr, nt, nsteps=nsteps)       
         return outfile
     
-    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=500000, nframe=100):
+    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=500000, nframe=100):
         """
         This function is used to generate a gromacs trajectory file from a pdb file
         
@@ -303,14 +306,14 @@ class GMXEngine(BaseObject):
         """
         mdmdpfile = 'md.mdp'
         fr = open(mdpfile)
-        if nframe > nstep:
-            nframe = nstep
+        if nframe > nsteps:
+            nframe = nsteps
         with open(mdmdpfile, 'w') as fw:
             for line in fr:
                 if line.startswith('nsteps'):
-                    line = 'nsteps      =  %d\n' % nstep
+                    line = 'nsteps      =  %d\n' % nsteps
                 elif line.startswith('nstxtcout'):
-                    line = 'nstxtcout    =  %d\n' %int(nstep/nframe)
+                    line = 'nstxtcout    =  %d\n' %int(nsteps/nframe)
                 fw.write(line)
         outtpr = self._grompp(pdbfile, topfile, 'md', mdmdpfile, maxwarn=2)
         grofile = self._mdrun(outtpr, nt)
@@ -349,8 +352,11 @@ class GMXEngine(BaseObject):
         os.chdir(rundir)
         topfile = os.path.split(topfile)[-1]
         boxpdb = self.gmx_box(pdbfile, boxtype=boxtype, boxsize=boxsize)
-        solvatedpdb = self.gmx_solvate(boxpdb, topfile, watergro='spc216.gro', maxsol=maxsol)
-        ionspdb, topfile = self.gmx_ions(solvatedpdb, topfile, conc=conc, mdpfile=os.path.join(MDPFILESDIR, 'ions.mdp'))
+        if maxsol != 0:
+            solvatedpdb = self.gmx_solvate(boxpdb, topfile, watergro='spc216.gro', maxsol=maxsol)
+            ionspdb, topfile = self.gmx_ions(solvatedpdb, topfile, conc=conc, mdpfile=os.path.join(MDPFILESDIR, 'ions.mdp'))
+        else:
+             ionspdb, topfile = boxpdb, topfile
         ionspdb, topfile = os.path.abspath(ionspdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return ionspdb, topfile
@@ -392,7 +398,7 @@ class GMXEngine(BaseObject):
         os.chdir(cwd)
         return minipdb, topfile
 
-    def run_to_npt(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15):
+    def run_to_npt(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=None):
         """
         Run a minimization, then an NVT, then an NPT, then return the name of the final PDB file and the
         topology file
@@ -416,13 +422,13 @@ class GMXEngine(BaseObject):
         cwd = os.getcwd()
         minipdb, topfile = self.run_to_minim(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
         os.chdir(rundir)
-        nvtpdb = self.gmx_nvt(minipdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'))
-        nptpdb = self.gmx_npt(nvtpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'))
+        nvtpdb = self.gmx_nvt(minipdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=nsteps)
+        nptpdb = self.gmx_npt(nvtpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=nsteps)
         nptpdb, topfile = os.path.abspath(nptpdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return nptpdb, topfile
 
-    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nstep=500000, nframe=100):
+    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=500000, nframe=100, eqsteps=None):
         """
         Runs a short MD simulation in a box of water
         
@@ -437,10 +443,10 @@ class GMXEngine(BaseObject):
         """
         if rundir is None:
             rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
-        nptpdb, topfile = self.run_to_npt(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
+        nptpdb, topfile = self.run_to_npt(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc, nsteps=eqsteps)
         cwd = os.getcwd()
         os.chdir(rundir)
-        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nstep=nstep, nframe=nframe)
+        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=nsteps, nframe=nframe)
         indexfile = generate_index_file(mdgro, pbc=True)
         mdxtcpbc = process_pbc(mdxtc, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
         mdgropbc = process_pbc(mdgro, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)

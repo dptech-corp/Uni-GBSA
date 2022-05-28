@@ -1,6 +1,7 @@
 import os
 import sys
 
+import uuid
 import shutil
 import parmed as pmd
 
@@ -70,7 +71,8 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     """
     #forcefield = {1:"amber03", 2:"amber94", 3:"amber96", 4:"amber99", 5:"amber99sb", 6:"amber99sb-ildn",
     #        7:"amber99sb-star-ildn-mut", 8:"amber14sb"}
-    proteinName = os.path.split(pdbfile)[-1][:-4]+'.TOP'
+    uid = str(uuid.uuid4())
+    proteinName = uid + os.path.split(pdbfile)[-1][:-4]+'.TOP'
     if not os.path.exists(proteinName):
         os.mkdir(proteinName)
     pdbfile = os.path.abspath(pdbfile)

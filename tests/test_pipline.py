@@ -51,13 +51,13 @@ class TestPipline(unittest.TestCase):
         shutil.rmtree(workdir)
 
     def test_minima(self):
-        pdbfile = '../example/2fvy/protein.pdb'
-        ligandfiles = ['../example/2fvy/BGC.mol2']
+        pdbfile = '../example/1ceb/1ceb_protein.pdb'
+        ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_minima(pdbfile, ligandfiles)
 
     def test_md(self):
-        pdbfile = '../example/2fvy/protein.pdb'
-        ligandfiles = ['../example/2fvy/BGC.mol2']
+        pdbfile = '../example/1ceb/1ceb_protein.pdb'
+        ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_md(pdbfile, ligandfiles)
 
 if __name__ == "__main__":
