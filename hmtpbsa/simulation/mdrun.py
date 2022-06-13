@@ -72,8 +72,8 @@ class GMXEngine(BaseObject):
         else:
             cmd = '{gmx} mdrun -v -deffnm {jobname} -nt {nt} -ntmpi 1 '.format(**args)
         if nsteps:
-            cmd += ' -nsteps %d'%nsteps
-        RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
+            cmd += ' -nsteps %d '%nsteps
+        RC = os.system(cmd+' >>%s 2>&1 '%self.gmxlog)
         if RC != 0:
             print(cmd)
             os.system('tail %s -n 50'%self.gmxlog)
