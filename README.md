@@ -26,6 +26,9 @@ python setup.py install
 
 ## Usage
 
+The OMP_NUM_THREADS environment variable specifies the number of threads to use for parallel regions. If you do not set OMP_NUM_THREADS , the number of processors available is the default value
+
+
 * If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
 ```Bash
 hmtpbsa-pipeline -h
