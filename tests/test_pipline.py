@@ -16,12 +16,15 @@ class TestPipline(unittest.TestCase):
 
 #################### version 0.0.2 ########################
 
-    def pipeline_simulation(self, pdbfile, ligandfiles, configfile):
+    def pipeline_simulation(self, pdbfile, ligandfiles, configfile=None):
         pdbfile, ligandfile, workdir = self.base(pdbfile, ligandfiles[0])
         ligand = ' '.join(ligandfiles)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
+        if configfile:
+            cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
+        else:
+            cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s'%(pdbfile, ligandfile)
         print(cmd)
         os.system(cmd)
         EF = os.path.exists('BindingEnergy.csv')
@@ -30,7 +33,7 @@ class TestPipline(unittest.TestCase):
         shutil.rmtree(workdir)
 
     def pipeline_minima(self, pdbfile, ligandfiles):
-        self.pipeline_simulation(pdbfile, ligandfiles, TEST_EM_CONFIG)
+        self.pipeline_simulation(pdbfile, ligandfiles)
     
     def pipeline_md(self, pdbfile, ligandfiles):
         self.pipeline_simulation(pdbfile, ligandfiles, TEST_MD_CONFIG)
@@ -51,13 +54,13 @@ class TestPipline(unittest.TestCase):
         shutil.rmtree(workdir)
 
     def test_minima(self):
-        pdbfile = '../example/2fvy/protein.pdb'
-        ligandfiles = ['../example/2fvy/BGC.mol2']
+        pdbfile = '../example/1ceb/1ceb_protein.pdb'
+        ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_minima(pdbfile, ligandfiles)
 
     def test_md(self):
-        pdbfile = '../example/2fvy/protein.pdb'
-        ligandfiles = ['../example/2fvy/BGC.mol2']
+        pdbfile = '../example/1ceb/1ceb_protein.pdb'
+        ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_md(pdbfile, ligandfiles)
 
 if __name__ == "__main__":

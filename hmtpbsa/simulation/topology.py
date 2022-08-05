@@ -1,14 +1,15 @@
 import os
 import sys
 
+import uuid
 import shutil
 import parmed as pmd
 
 from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype
+from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype, write_position_restrain
 
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", clean=True, outtop=None, outcoord=None):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -52,7 +53,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     if outtop:
         moltop.write(outtop)
     os.chdir(cwd)
-    if clean:
+    if not verbose:
         shutil.rmtree(ligandName)
     return moltop, molgro
 
@@ -70,7 +71,8 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     """
     #forcefield = {1:"amber03", 2:"amber94", 3:"amber96", 4:"amber99", 5:"amber99sb", 6:"amber99sb-ildn",
     #        7:"amber99sb-star-ildn-mut", 8:"amber14sb"}
-    proteinName = os.path.split(pdbfile)[-1][:-4]+'.TOP'
+    uid = str(uuid.uuid4())
+    proteinName = uid + os.path.split(pdbfile)[-1][:-4]+'.TOP'
     if not os.path.exists(proteinName):
         os.mkdir(proteinName)
     pdbfile = os.path.abspath(pdbfile)
@@ -109,7 +111,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     shutil.rmtree(proteinName)
     return prottop, protgro
 
-def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2'):
+def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', verbose=False):
     """
     Build a topology file for a protein-ligand system
     
@@ -128,7 +130,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = receptor
 
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce)
+        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 
@@ -161,6 +163,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
     with open(outtop, 'w') as fw:
         for line in lines:
             fw.write(line)
+    write_position_restrain(outtop)
 
 def main():
     pdbfile, ligandfile = sys.argv[1], sys.argv[2]

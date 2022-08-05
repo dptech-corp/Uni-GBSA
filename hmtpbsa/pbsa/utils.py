@@ -1,5 +1,5 @@
 import os
-
+from hmtpbsa.settings import GMXEXE
 def set_amber_home(proc):
     """
     Find the directory containing the executable for a command
@@ -29,7 +29,7 @@ def obtain_num_of_frame(trajfile):
     Returns:
       the number of frames in the trajectory file.
     """
-    cmd = 'gmx check -f %s 2>&1 |grep Coords'%trajfile
+    cmd = '%s check -f %s 2>&1 |grep Coords'% (GMXEXE, trajfile)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if not text:
