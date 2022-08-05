@@ -1,8 +1,8 @@
 title       = NPT equilibration
-define      = -DPOSRES  ; position restrain the protein
+define      = -DPOSRES -DPOSRES_HEAVY  ; position restrain the protein
 ; Run parameters
 integrator  = md        ; leap-frog integrator
-nsteps      = 2500      ; 2 * 15000 = 100 ps
+nsteps      = 50000      ; 2 * 15000 = 100 ps
 dt          = 0.002     ; 2 fs
 ; Output control
 nstxout     = 10000       ; save coordinates every 1.0 ps

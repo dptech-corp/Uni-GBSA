@@ -44,7 +44,9 @@ class PBSA(object):
             trajectoryfile = os.path.abspath('com_traj.%s'%ext)
         if mmpbsafile is None:
             mmpbsafile = generate_input_file(pbsaParas, outfile='mmpbsa.in')
+            shutil.copy(mmpbsafile, '../mmpbsa.in')
         mmpbsafile = os.path.abspath(mmpbsafile)
+            
         # mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate', decompose=False
         receptor, ligand = obtain_id_from_index(indexfile)
         self.paras = {
@@ -57,6 +59,7 @@ class PBSA(object):
             'receptor': receptor,
             'ligand': ligand
         }
+        return mmpbsafile
 
     def run(self, verbose=0):
         """

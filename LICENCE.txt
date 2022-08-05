@@ -1,0 +1,7 @@
+Copyright Notice
+
+Beijing DP Technology Co., Ltd. (hereinafter referred to as “DP Technology”) fully possesses the copyright of this code.
+
+Without DP Technology’s written authorization, any natural person or enterprise shall not copy, forward or perform any unauthorized act. If authorized, the source must be clearly indicated.
+
+Otherwise, DP Technology has the right to pursue the liability for the violation of the above mentioned terms, and reserves the right to pursue other legal responsibilities.

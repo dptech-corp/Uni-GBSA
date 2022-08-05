@@ -33,10 +33,11 @@ def topol_builder():
     parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
     parser.add_argument('-o', dest='outdir', help='A output directory.', default='GMXtop')
     parser.add_argument('-c', help='Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True', action='store_true', default=True)
-    
+    parser.add_argument('-verbose', help='Keep the directory or not.', default=False, action='store_true')
     args = parser.parse_args()
     protein, ligand, outdir, cF = args.protein, args.ligand, args.outdir, args.c
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
+    verbose = args.verbose
     if not protein and not ligand:
         print('Not found input file!')
 
@@ -69,7 +70,7 @@ def topol_builder():
         ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord)
         if cF:
             comxtop, comxcoord = os.path.join(outdir, "%s_%s.top"%(proteinName, ligandName)), os.path.join(outdir, "%s_%s.pdb"%(proteinName, ligandName))
-            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord)
+            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose)
 
 def simulation_builder():
     parser = argparse.ArgumentParser(description='Build MD simulation for input file.')
@@ -142,4 +143,83 @@ def simulation_builder():
             shutil.copy(topfile, "complex.top")
 
             engine.clean(pdbfile=grofile)
+    os.chdir(cwd)
+
+def simulation_run():
+    parser = argparse.ArgumentParser(description='Run MD simulation for input file.')
+    parser.add_argument('-p', dest='protein', help='Protein file for the simulation.', required=True)
+    parser.add_argument('-l', dest='ligand', help='Ligand file or directory for the simulation.', default="")
+    parser.add_argument('-pf', dest='protforce', help='Protein forcefield.', default='amber03')
+    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
+    parser.add_argument('-bt', dest='boxtype', help='Simulation box type, default: triclinic', default='triclinic')
+    parser.add_argument('-box', help='Simulation box size.', nargs=3, type=float, default=None)
+    parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
+    parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
+    parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
+    parser.add_argument('-nstep', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
+    parser.add_argument('-verbose', help='Keep all the files in the simulation.', action='store_true', default=False)
+
+    args = parser.parse_args()
+    proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
+    proteinForcefield, ligandForcefield = args.protforce, args.ligforce
+    boxtype, box, conc, boxsize, nstep = args.boxtype, args.box, args.conc, args.d, args.nstep
+    verbose = args.verbose
+    if box:
+        boxsize = box
+
+    ligandfiles = []
+    if os.path.isdir(ligand):
+        ligandfiles = glob(os.path.join(os.path.abspath(ligand), "*"))
+    elif os.path.isfile(ligand):
+        ligandfiles = [ os.path.abspath(ligand) ]
+
+    proteinName = os.path.split(proteinfile)[-1][:-4]
+    receptor = topology.build_protein(proteinfile, forcefield=proteinForcefield)
+
+    if not outdir:
+        outdir = 'GMXtop'
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
+    outdir = os.path.abspath(outdir)
+
+    cwd = os.getcwd()
+    os.chdir(outdir)
+    grofile = 'complex.pdb'
+    topfile = 'complex.top'
+
+    if len(ligandfiles) == 0:
+        logging.info('No ligand found, build protein only.')
+        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile)
+
+        logging.info('Build simulation for %s'%proteinName)
+        engine = mdrun.GMXEngine()
+        mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep)
+
+        shutil.copy(mdgro, os.path.join(outdir, '%s_system.gro'%proteinName))
+        shutil.copy(topfile, os.path.join(outdir, '%s_system.top'%proteinName))
+        shutil.copy(mdxtc, os.path.join(outdir, '%s_traj.xtc'%proteinName))
+        if not verbose:
+            engine.clean(pdbfile=grofile)
+            os.system('rm complex.pdb complex.top >/dev/null 2>&1')
+    else:
+        for ligandfile in ligandfiles:
+            ligandfile = os.path.abspath(ligandfile)
+            ligandName = os.path.split(ligandfile)[-1][:-4]
+            if not os.path.exists(ligandName):
+                os.mkdir(ligandName)
+            os.chdir(ligandName)
+
+            logging.info('Build ligand topology: %s'%ligandName)
+            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield)
+
+            logging.info('Building simulation for: %s'%ligandName)
+            engine = mdrun.GMXEngine()
+    
+            mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep)
+
+            shutil.copy(mdgro, "complex.gro")
+            shutil.copy(topfile, "complex.top")
+            shutil.copy(mdxtc, 'traj_comx.xtc')
+            if not verbose:
+                engine.clean(pdbfile=grofile)
     os.chdir(cwd)

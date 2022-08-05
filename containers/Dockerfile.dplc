@@ -1,0 +1,9 @@
+FROM dockerymh/hmtpbsa:gmx
+
+RUN cp ./ /data/                     && \
+    cd /data/                        && \ 
+    python setup.py install          && \
+    rm -rf /data/*
+
+RUN echo `which python`
+RUN hmtpbsa-pipeline -h
