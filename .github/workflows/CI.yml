@@ -4,18 +4,11 @@ on: [push]
 jobs:
   MMPBSA_unittest:
     runs-on: "ubuntu-latest"
-    container: dpzhengh/hmtpbsa:hmtpbsa-v1
+    container: dockerymh/hmtpbsa
     
     steps:
     - name: checkout repo
       uses: actions/checkout@v2
-    
-    - name: install acpype
-      shell: bash
-      run: |
-        source activate amber21
-        pip install acpype
-        pip install gmx_MMPBSA==1.5.2
         
     - name: install hmtpbsa
       shell: bash
