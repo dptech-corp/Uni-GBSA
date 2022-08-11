@@ -65,9 +65,9 @@ def topol_builder():
         prottop, protgro = topology.build_protein(proteinfile, forcefield=proteinForcefield, outtop=outtop, outcoord=outcoord)
     for ligandfile in ligandfiles:
         ligandName = os.path.split(ligandfile)[-1][:-4]
-        outtop, outcoord = os.path.join(outdir, ligandName+'.top'), os.path.join(outdir, ligandName+'.pdb')
+        outtop, outcoord, outitp = os.path.join(outdir, ligandName+'.top'), os.path.join(outdir, ligandName+'.pdb'), os.path.join(outdir, ligandName+'.itp')
         # outcoord parameter is useless
-        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord)
+        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord, itpfile=outitp)
         if cF:
             comxtop, comxcoord = os.path.join(outdir, "%s_%s.top"%(proteinName, ligandName)), os.path.join(outdir, "%s_%s.pdb"%(proteinName, ligandName))
             topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose)

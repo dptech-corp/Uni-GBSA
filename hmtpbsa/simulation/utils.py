@@ -1,7 +1,7 @@
 
 import os
 from hmtpbsa.settings import GMXEXE
-def convert_to_mol2(inputfile, filetype, outfile=None):
+def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
     """
     Convert a file of type filetype to mol2 format
     
@@ -16,9 +16,9 @@ def convert_to_mol2(inputfile, filetype, outfile=None):
     """
     if outfile is None:
         filename = os.path.split(inputfile)[-1][:-4]
-        outfile = filename + '.mol2'
+        outfile = filename + '.' + outtype
     # convert to mol2
-    cmd = 'obabel -i %s %s -o mol2 -O %s'%(filetype, inputfile, outfile)
+    cmd = 'obabel -i %s %s -o %s -O %s'%(filetype, inputfile, outtype, outfile)
     RC = os.system(cmd)
     if RC!=0:
         raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
