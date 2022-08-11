@@ -151,7 +151,7 @@ Be careful with the variables you modify, some can have severe consequences on t
 
 # Decomposition namelist variables
 &decomposition
-  idecomp              = 0                                              # Which type of decomposition analysis to do
+  idecomp              = 1                                              # Which type of decomposition analysis to do
   dec_verbose          = 0                                              # Control energy terms are printed to the output
   print_res            = "within 6"                                     # Which residues to print decomposition data for
   csv_format           = 1                                              # Write decomposition data in CSV format
