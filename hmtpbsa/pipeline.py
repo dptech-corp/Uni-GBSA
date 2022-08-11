@@ -224,11 +224,11 @@ def main():
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
-    parser.add_argument('--mode', help='Calculation mode, use input file or minimization file or MD simulation file to calculate GBSA. default:None', choices=[None, 'input', 'em', 'md' ],default=None)
+    parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
-    receptor, ligands, conf, ligdir, outfile, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.verbose
+    receptor, ligands, conf, ligdir, outfile, decomposition, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.decomp, args.verbose
     
     if ligands is None:
         ligands = []
@@ -261,8 +261,8 @@ def main():
         },
         'PBSA':  {k:v for k,v in config.items('PBSA')}
     }
-    if args.mode:
-        paras['simulation']['mode'] = args.mode
+    if decomposition:
+        paras['PBSA']['modes'] += ',decomposition'
 
     if paras['simulation']['mode'] == 'em':
         minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
