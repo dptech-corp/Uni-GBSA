@@ -4,7 +4,7 @@ on: [push]
 jobs:
   MMPBSA_unittest:
     runs-on: "ubuntu-latest"
-    container: dockerymh/hmtpbsa
+    container: dockerymh/hmtpbsa:gmx
     
     steps:
     - name: checkout repo
