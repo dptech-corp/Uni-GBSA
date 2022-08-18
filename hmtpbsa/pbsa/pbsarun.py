@@ -19,7 +19,7 @@ class PBSA(object):
         self.workdir = os.path.abspath(workdir)
         self.cwd = os.getcwd()
 
-    def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None):
+    def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1):
         """
         The function is used to set the parameters for the MMPBSA.py script
         
@@ -57,7 +57,8 @@ class PBSA(object):
             'trajectoryfile': trajectoryfile,
             'topolfile': topolfile,
             'receptor': receptor,
-            'ligand': ligand
+            'ligand': ligand,
+            'numthread':nt
         }
         return mmpbsafile
 
@@ -71,7 +72,8 @@ class PBSA(object):
         #print("="*80)
         logging.info('Run the MMPB(GB)SA.')
         cmd = '{gmx_MMPBSA} MPI -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
-        RC = os.system(cmd)
+        mpicmd = 'mpirun --use-hwthread-cpus --allow-run-as-root -np {numthread} {gmx_MMPBSA} MPI -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
+        RC = os.system(mpicmd)
         if RC != 0:
             raise Exception('ERROR run: %s \nPlease ckeck the log file for details: %s'%(cmd, os.path.abspath("mmpbsa.log")))
         shutil.copy('FINAL_RESULTS_MMPBSA.dat', self.cwd)
@@ -165,11 +167,12 @@ def main():
     parser.add_argument('-m', dest='mode', help='MMPBSA mode', nargs='+', default=['GB'])
     parser.add_argument('-f', dest='mmpbsafile', help='Input mmpbsa file', default=None)
     parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
+    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
     parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
 
     args = parser.parse_args()
     #exit(0)
-    complexFile, topolFile, indexFile, trajFile, debug, mmpbsafile = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.mmpbsafile
+    complexFile, topolFile, indexFile, trajFile, debug, mmpbsafile, nt = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.mmpbsafile, args.thread
     if trajFile is None:
         trajFile = complexFile
     if mmpbsafile:
@@ -179,7 +182,7 @@ def main():
         pbsaParas = { "modes":','.join(args.mode)}
 
     pbsa = PBSA()
-    pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, mmpbsafile=mmpbsafile, pbsaParas=pbsaParas)
+    pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, mmpbsafile=mmpbsafile, pbsaParas=pbsaParas, nt=nt)
     pbsa.run(verbose=debug)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")

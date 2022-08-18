@@ -39,6 +39,9 @@ if 'OMP_NUM_THREADS' in os.environ:
 else:
     OMP_NUM_THREADS = 4
 
+def set_OMP_NUM_THREADS(nt):
+    os.environ['OMP_NUM_THREADS'] = nt
+
 def obtain_MMPBSA_version():
     versionFile = '/tmp/' + uuid.uuid1().hex
     os.system('gmx_MMPBSA -v >%s 2>&1 '%versionFile)
