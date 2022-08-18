@@ -40,7 +40,7 @@ else:
     OMP_NUM_THREADS = 4
 
 def set_OMP_NUM_THREADS(nt):
-    os.environ['OMP_NUM_THREADS'] = nt
+    os.environ['OMP_NUM_THREADS'] = str(nt)
 
 def obtain_MMPBSA_version():
     versionFile = '/tmp/' + uuid.uuid1().hex

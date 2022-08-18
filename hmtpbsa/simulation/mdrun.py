@@ -49,7 +49,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR run grompp %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outtpr
     
-    def _mdrun(self, tprfile, nt=OMP_NUM_THREADS, nsteps=None):
+    def _mdrun(self, tprfile, nt=1, nsteps=None):
         """
         The function takes a tpr file and runs md
         
@@ -183,7 +183,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR for add ions %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile, topfile
 
-    def gmx_minim(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp')):
+    def gmx_minim(self, pdbfile, topfile, nt=1, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp')):
         """
         The gmx_minim function takes a pdb file and a topology file and runs a minimization on the pdb file
         
@@ -220,7 +220,7 @@ class GMXEngine(BaseObject):
             raise Exception('ERROR genrestr %s. See the logfile for details %s'%(pdbfile, os.path.abspath(self.gmxlog)))
         return outfile
 
-    def gmx_minim_(self,  pdbfile, topfile, force=[1000, 1000, 1000], nt=OMP_NUM_THREADS):
+    def gmx_minim_(self,  pdbfile, topfile, force=[1000, 1000, 1000], nt=1):
         
         # step 1-1: steepest descent 500 step, all heavy atoms restrain at 2092 kJ/(mol * nm^2) = 5 kcal/(mol * A^2)
         #indexfile = generate_index_file_for_restrain(pdbfile)
@@ -253,7 +253,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt=nt)
         return outfile
 
-    def gmx_nvt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=None):
+    def gmx_nvt(self, pdbfile, topfile, nt=1, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=None):
         """
         1. grompp: generate tpr file from pdb and topology files
         2. mdrun: run the simulation using the tpr file
@@ -273,7 +273,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt, nsteps=nsteps)       
         return outfile
     
-    def gmx_npt(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=None):
+    def gmx_npt(self, pdbfile, topfile, nt=1, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=None):
         """
         This function runs gromacs npt simulation
         
@@ -290,7 +290,7 @@ class GMXEngine(BaseObject):
         outfile = self._mdrun(outtpr, nt, nsteps=nsteps)       
         return outfile
     
-    def gmx_md(self, pdbfile, topfile, nt=OMP_NUM_THREADS, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=500000, nframe=100):
+    def gmx_md(self, pdbfile, topfile, nt=1, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=500000, nframe=100):
         """
         This function is used to generate a gromacs trajectory file from a pdb file
         
@@ -361,7 +361,7 @@ class GMXEngine(BaseObject):
         os.chdir(cwd)
         return ionspdb, topfile
 
-    def run_to_minim(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15):
+    def run_to_minim(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nt=1):
         """
         Runs a minimization on a pdb file, and returns the minimized pdb file and topology
         
@@ -382,23 +382,23 @@ class GMXEngine(BaseObject):
             rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
         cwd = os.getcwd()
         os.chdir(rundir)
-        minipdb = self.gmx_minim(ionspdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp'))
+        minipdb = self.gmx_minim(ionspdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'minim.mdp'), nt=nt)
         minipdb, topfile = os.path.abspath(minipdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return minipdb, topfile
     
-    def run_to_minim_pbsa(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15):
+    def run_to_minim_pbsa(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nt=1):
         ionspdb, topfile = self.run_to_ions(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
         if rundir is None:
             rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
         cwd = os.getcwd()
         os.chdir(rundir)
-        minipdb = self.gmx_minim_(ionspdb, topfile, force=[1000, 1000, 1000], nt=OMP_NUM_THREADS)
+        minipdb = self.gmx_minim_(ionspdb, topfile, force=[1000, 1000, 1000], nt=nt)
         minipdb, topfile = os.path.abspath(minipdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return minipdb, topfile
 
-    def run_to_npt(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=None):
+    def run_to_npt(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=None, nt=1):
         """
         Run a minimization, then an NVT, then an NPT, then return the name of the final PDB file and the
         topology file
@@ -420,15 +420,15 @@ class GMXEngine(BaseObject):
         if rundir is None:
             rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
         cwd = os.getcwd()
-        minipdb, topfile = self.run_to_minim(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc)
+        minipdb, topfile = self.run_to_minim(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc, nt=nt)
         os.chdir(rundir)
-        nvtpdb = self.gmx_nvt(minipdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=nsteps)
-        nptpdb = self.gmx_npt(nvtpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=nsteps)
+        nvtpdb = self.gmx_nvt(minipdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'nvt.mdp'), nsteps=nsteps, nt=nt)
+        nptpdb = self.gmx_npt(nvtpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'npt.mdp'), nsteps=nsteps, nt=nt)
         nptpdb, topfile = os.path.abspath(nptpdb), os.path.abspath(topfile)
         os.chdir(cwd)
         return nptpdb, topfile
 
-    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=500000, nframe=100, eqsteps=None):
+    def run_to_md(self, pdbfile, topfile, rundir=None, boxtype='triclinic', boxsize=0.9, maxsol=None, conc=0.15, nsteps=500000, nframe=100, eqsteps=None, nt=1):
         """
         Runs a short MD simulation in a box of water
         
@@ -443,10 +443,10 @@ class GMXEngine(BaseObject):
         """
         if rundir is None:
             rundir = os.path.split(pdbfile)[-1][:-4]+'.GMX'
-        nptpdb, topfile = self.run_to_npt(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc, nsteps=eqsteps)
+        nptpdb, topfile = self.run_to_npt(pdbfile, topfile, rundir=rundir, boxtype=boxtype, boxsize=boxsize, maxsol=maxsol, conc=conc, nsteps=eqsteps, nt=nt)
         cwd = os.getcwd()
         os.chdir(rundir)
-        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=nsteps, nframe=nframe)
+        mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=nsteps, nframe=nframe, nt=nt)
         indexfile = generate_index_file(mdgro, pbc=True)
         mdxtcpbc = process_pbc(mdxtc, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
         mdgropbc = process_pbc(mdgro, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
