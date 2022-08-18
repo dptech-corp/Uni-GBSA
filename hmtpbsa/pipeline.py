@@ -34,7 +34,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     if RC!=0:
        raise Exception('Error conver %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
-    mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=1)
+    mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
     print("mode    detal_G(kcal/mole)    Std. Dev.")
@@ -129,7 +129,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         engine = GMXEngine()
 
         #minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
-        minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'])
+        minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=nt)
     
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
         RC = os.system(cmd)
@@ -189,7 +189,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         logging.info('Running simulation: %s'%ligandName)
         engine = GMXEngine()
     
-        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nsteps=simParas['nsteps'], nframe=simParas['nframe'], eqsteps=simParas['eqsteps'])
+        mdgro, mdxtc, outtop = engine.run_to_md(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nsteps=simParas['nsteps'], nframe=simParas['nframe'], eqsteps=simParas['eqsteps'], nt=nt)
 
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, mdgro, grofile)
         RC = os.system(cmd)
@@ -215,7 +215,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
     df.to_csv(outfile, index=False)
 
 
-def main():
+def main(args=None):
     parser = argparse.ArgumentParser(description='GBSA Calculation.')
     parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', required=True)
     parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
@@ -227,7 +227,7 @@ def main():
     parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     receptor, ligands, conf, ligdir, outfile, decomposition, nt, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.decomp, args.thread, args.verbose
     
     if ligands is None:
@@ -265,11 +265,11 @@ def main():
         paras['PBSA']['modes'] += ',decomposition'
 
     if paras['simulation']['mode'] == 'em':
-        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
+        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'md':
-        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
+        md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'input':
-        base_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose)
+        base_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
 
 if __name__ == "__main__":
     main()
