@@ -41,6 +41,7 @@ class GMXEngine(BaseObject):
             'maxwarn': maxwarn
         }
         #shutil.copy(mdpfile, os.path.split(mdpfile)[-1])
+        #shutil.copy(mdpfile, os.path.split(mdpfile)[-1])
         cmd = '{gmx} grompp -f {mdpfile} -c {inputfile} -r {inputfile} -o {outputfile} -p {topfile} -maxwarn {maxwarn} '.format(**args)
         RC = os.system(cmd+'>>%s 2>&1 '%self.gmxlog)
         if RC != 0:

@@ -38,7 +38,7 @@ class TestPipline(unittest.TestCase):
         shutil.rmtree(workdir)
 
     def pipeline_minima(self, pdbfile, ligandfiles):
-        self.pipeline_simulation(pdbfile, ligandfiles)
+        self.pipeline_simulation(pdbfile, ligandfiles, TEST_EM_CONFIG)
     
     def pipeline_md(self, pdbfile, ligandfiles):
         self.pipeline_simulation(pdbfile, ligandfiles, TEST_MD_CONFIG)

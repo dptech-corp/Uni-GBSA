@@ -58,6 +58,7 @@ def generate_index_file(complexfile, pbc=False):
     groupdict = {
         'center': '',
         'output': '',
+        'gmx':GMXEXE,
         'gmx':GMXEXE
         }
     groupid = 0
