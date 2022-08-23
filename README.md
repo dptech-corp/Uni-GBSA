@@ -26,7 +26,7 @@ python setup.py install
 
 ## Usage
 
-The OMP_NUM_THREADS environment variable specifies the number of threads to use for parallel regions. If you do not set OMP_NUM_THREADS , the number of processors available is the default value
+The `OMP_NUM_THREADS` environment variable specifies the number of threads to use for parallel regions. If you do not set `OMP_NUM_THREADS` , the number of processors available is the default value `4`
 
 
 * If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
@@ -79,6 +79,19 @@ hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ```Bash
 hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
 ```
+
+* Build topology for protein or ligand by gromacs. ``hmtpbsa-buildtop``
+```bash
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
+```
+
+* Run MD simulation with ``hmtpbsa-md``
+
+* Process PBC condition with ``hmtpbsa-pbc``
+
+* Build simulation system with ``hmtpbsa-buildsys``
+
 
 * Build topology for protein or ligand by gromacs. ``hmtpbsa-buildtop``
 ```bash
