@@ -91,3 +91,16 @@ hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.m
 * Process PBC condition with ``hmtpbsa-pbc``
 
 * Build simulation system with ``hmtpbsa-buildsys``
+
+
+* Build topology for protein or ligand by gromacs. ``hmtpbsa-buildtop``
+```bash
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
+hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
+```
+
+* Run MD simulation with ``hmtpbsa-md``
+
+* Process PBC condition with ``hmtpbsa-pbc``
+
+* Build simulation system with ``hmtpbsa-buildsys``
