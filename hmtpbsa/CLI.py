@@ -224,3 +224,40 @@ def simulation_run():
             if not verbose:
                 engine.clean(pdbfile=grofile)
     os.chdir(cwd)
+
+def traj_pipeline(args=None):
+    parser = argparse.ArgumentParser(description='Free energy calcaulated by PBSA method.')
+    parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file for the trajectory.', required=True)
+    parser.add_argument('-p', dest='TOP', help='Gromacs topol file for the system.', required=True)
+    parser.add_argument('-ndx', dest='ndx', help='Gromacs index file, must contain recepror and ligand group.', required=True)
+    parser.add_argument('-m', dest='mode', help='MMPBSA mode', nargs='+', default=['GB'])
+    parser.add_argument('-f', dest='mmpbsafile', help='Input mmpbsa file', default=None)
+    parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
+    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
+    parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
+    
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
+    #exit(0)
+    complexFile, topolFile, indexFile, trajFile, debug, mmpbsafile, nt = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.mmpbsafile, args.thread
+    if trajFile is None:
+        trajFile = complexFile
+    if mmpbsafile:
+        mmpbsafile = os.path.abspath(mmpbsafile)
+        pbsaParas = None
+    else:
+        pbsaParas = { "modes":','.join(args.mode)}
+
+    pbsa = PBSA()
+    pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, mmpbsafile=mmpbsafile, pbsaParas=pbsaParas, nt=nt)
+    pbsa.run(verbose=debug)
+    detal_G = pbsa.extract_result()
+    print("mode    detal_G(kcal/mole)    Std. Dev.")
+    for k, v in detal_G.items():
+        print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
+
+
+if __name__ == "__main__":
+    main()
