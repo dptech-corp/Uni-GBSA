@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from hmtpbsa.settings import GMXEXE
 def set_amber_home(proc):
     """

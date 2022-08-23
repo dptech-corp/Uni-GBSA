@@ -22,9 +22,19 @@ def find_gmx():
     logging.error('Not found gmx or gmx_mpi.')
     exit(1)
 
+
+    
 GMXEXE = find_gmx()
 MDPFILESDIR = os.path.dirname(os.path.abspath(__file__)) + '/simulation/mdp'
 
+def has_mpirun():
+    RC = os.system('which mpirun >/dev/null 2>&1')
+    if RC == 0:
+        return True
+    else:
+        return False
+
+MPI = has_mpirun()
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
@@ -38,6 +48,9 @@ if 'OMP_NUM_THREADS' in os.environ:
     OMP_NUM_THREADS = os.environ['OMP_NUM_THREADS']
 else:
     OMP_NUM_THREADS = 4
+
+def set_OMP_NUM_THREADS(nt):
+    os.environ['OMP_NUM_THREADS'] = str(nt)
 
 def obtain_MMPBSA_version():
     versionFile = '/tmp/' + uuid.uuid1().hex

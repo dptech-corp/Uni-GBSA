@@ -7,9 +7,9 @@ import parmed as pmd
 
 from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
 from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.utils import convert_to_mol2, guess_filetype, write_position_restrain
+from hmtpbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain
 
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -29,8 +29,8 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     ligandName = os.path.split(ligandfile)[-1][:-4]+'.TOP'
     filetype = guess_filetype(ligandfile)
     acceptFileTypes = ('pdb', 'mol2', 'mol')
-    if filetype not in acceptFileTypes:
-        ligandfile = convert_to_mol2(ligandfile, filetype)
+    if filetype != 'mol':
+        ligandfile = convert_format(ligandfile, filetype)
     if not os.path.exists(ligandName): 
         os.mkdir(ligandName)
     cwd = os.getcwd()
@@ -39,19 +39,25 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         'thread':OMP_NUM_THREADS,
         'ligandfile': ligandfile,
         'forcefield': forcefield,
-        'method': charge_method
+        'method': charge_method,
+        'molname': molname
     }
-    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b MOL -a {forcefield} -c {method} -f >acpype.log 2>&1 ".format(**paras)
+    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -f >acpype.log 2>&1 ".format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
         os.system('tail -n 50 acpype.log')
         raise Exception('ERROR run the acpype. see the %s for details.'%os.path.abspath("acpype.log"))
-    os.chdir('MOL.acpype')
-    moltop = pmd.load_file('MOL_GMX.top')
-    molgro = pmd.load_file('MOL_GMX.gro', structure=True)
+    os.chdir(f'{molname}.acpype')
+    moltop = pmd.load_file(f'{molname}_GMX.top')
+    molitp = f'{molname}_GMX.itp'
+    molgro = pmd.load_file(f'{molname}_GMX.gro', structure=True)
     if outtop:
         moltop.write(outtop)
+    if outcoord:
+        molgro.write_pdb(outcoord)
+    if itpfile:
+        RC = os.system(f'cp {molitp} {itpfile}')
     os.chdir(cwd)
     if not verbose:
         shutil.rmtree(ligandName)
@@ -111,7 +117,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     shutil.rmtree(proteinName)
     return prottop, protgro
 
-def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', verbose=False):
+def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', charge_method='bcc', verbose=False):
     """
     Build a topology file for a protein-ligand system
     
@@ -130,7 +136,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = receptor
 
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, verbose=verbose)
+        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 
