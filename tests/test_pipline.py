@@ -1,10 +1,17 @@
 import os
 import shutil
 import unittest
+from hmtpbsa.pipeline import md_pipeline, minim_pipeline, traj_pipeline, load_configue_file
+
+import warnings
+
 
 TEST_EM_CONFIG = os.path.dirname(os.path.abspath(__file__)) + '/config/em.ini'
 TEST_MD_CONFIG = os.path.dirname(os.path.abspath(__file__)) + '/config/md.ini'
 class TestPipline(unittest.TestCase):
+    def setUpClass():
+        warnings.simplefilter('ignore', ResourceWarning)
+        
     def base(self, pdbfile, ligandfile):
         pdbfile = os.path.abspath(pdbfile)
         ligandfile = os.path.abspath(ligandfile)
@@ -16,17 +23,15 @@ class TestPipline(unittest.TestCase):
 
 #################### version 0.0.2 ########################
 
-    def pipeline_simulation(self, pdbfile, ligandfiles, configfile=None):
+    def pipeline_simulation(self, pdbfile, ligandfiles, configfile=None, nt=4):
         pdbfile, ligandfile, workdir = self.base(pdbfile, ligandfiles[0])
-        ligand = ' '.join(ligandfiles)
         cwd = os.getcwd()
         os.chdir(workdir)
-        if configfile:
-            cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s -c %s'%(pdbfile, ligandfile, configfile)
-        else:
-            cmd = 'export OMP_NUM_THREADS=1;hmtpbsa-pipeline -i %s -l %s'%(pdbfile, ligandfile)
-        print(cmd)
-        os.system(cmd)
+        paras = load_configue_file(configfile)
+        if paras['simulation']['mode']=='em':
+            minim_pipeline(receptorfile=pdbfile, ligandfiles=[ligandfile], paras=paras, outfile='BindingEnergy.csv', nt=nt, verbose=True)
+        elif paras['simulation']['mode']=='md':
+            md_pipeline(receptorfile=pdbfile, ligandfiles=[ligandfile], paras=paras, outfile='BindingEnergy.csv', nt=nt)
         EF = os.path.exists('BindingEnergy.csv')
         self.assertTrue(EF)
         os.chdir(cwd)
@@ -38,17 +43,14 @@ class TestPipline(unittest.TestCase):
     def pipeline_md(self, pdbfile, ligandfiles):
         self.pipeline_simulation(pdbfile, ligandfiles, TEST_MD_CONFIG)
 
-    def test_traj(self):
+    def test_traj(self, nt=4):
         pdbfile, topfile, indexfile = '../example/3f/complex.pdb', os.path.abspath('../example/3f/complex.top'), os.path.abspath('../example/3f/index.ndx')
         pdbfile, ligandfile, workdir = self.base(pdbfile, pdbfile)
         cwd = os.getcwd()
         os.chdir(workdir)
-        cmd = 'hmtpbsa-traj -i %s -p %s -ndx %s -m pb gb -t %s '%(pdbfile, topfile, indexfile, pdbfile)
-        RC = os.system(cmd)
-        if RC != 0:
-            EF = False
-        else:
-            EF = True
+        paras = load_configue_file()
+        traj_pipeline(pdbfile, pdbfile, topfile, indexfile, pbsaParas=paras['PBSA'])
+        EF = os.path.exists('FINAL_RESULTS_MMPBSA.dat')
         self.assertTrue(EF)
         os.chdir(cwd)
         shutil.rmtree(workdir)
