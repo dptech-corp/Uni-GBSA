@@ -1,11 +1,10 @@
 import os
 import shutil
 import argparse
-import configparser
 import pandas as pd
 
 from hmtpbsa.pbsa.pbsarun import PBSA
-from hmtpbsa.utils import generate_index_file
+from hmtpbsa.utils import generate_index_file, load_configue_file
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.topology import build_topol, build_protein
 from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE, set_OMP_NUM_THREADS
@@ -32,7 +31,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, complexfile, reresfile)
     RC = os.system(cmd)
     if RC!=0:
-       raise Exception('Error conver %s to %s'%(complexfile, reresfile))
+       raise Exception('Error convert %s to %s'%(complexfile, reresfile))
     pbsa = PBSA()
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
@@ -75,7 +74,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
         grofile = 'complex.pdb'
         topfile = 'complex.top'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'])
+        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
 
         indexfile = generate_index_file(grofile)
         pbsaParas = paras['PBSA']
@@ -89,7 +88,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
     df.to_csv(outfile, index=False)
 
 
-def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', verbose=False):
+def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', verbose=False):
     """
     It runs the simulation pipeline for each ligand.
     
@@ -123,7 +122,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         grofile = 'complex.pdb'
         topfile = 'complex.top'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'])
+        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
 
         logging.info('Running energy minimization: %s'%ligandName)
         engine = GMXEngine()
@@ -134,7 +133,7 @@ def minim_peipline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
-            raise Exception('Error conver %s to %s'%(minimgro, grofile))
+            raise Exception('Error convert %s to %s'%(minimgro, grofile))
         shutil.copy(topfile, outtop)
 
         indexfile = generate_index_file(grofile)
@@ -184,7 +183,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         topfile = 'complex.top'
         xtcfile = 'traj_com.xtc'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'])
+        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
 
         logging.info('Running simulation: %s'%ligandName)
         engine = GMXEngine()
@@ -194,7 +193,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, mdgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
-            raise Exception('Error conver %s to %s'%(mdgro, grofile))
+            raise Exception('Error convert %s to %s'%(mdgro, grofile))
 
         shutil.copy(topfile, outtop)
         shutil.copy(mdxtc, xtcfile)
@@ -241,31 +240,17 @@ def main(args=None):
 
     if not os.path.exists(conf):
         raise Exception("Not found the configure file! %s"%conf)
-    config = configparser.ConfigParser()
-    config.read(conf)
+    #config = configparser.ConfigParser()
+    #config.read(conf)
 
     mmpbsafile = os.path.abspath(args.pbsafile) if args.pbsafile else args.pbsafile
     set_OMP_NUM_THREADS(nt)
-    paras = {
-        'simulation':{
-            'mode': config.get('simulation', 'mode', fallback='em'),
-            'boxtype' : config.get('simulation', 'boxtype', fallback='triclinic'),
-            'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
-            'conc': config.getfloat('simulation', 'conc', fallback=0.15),
-            'nsteps': config.getint('simulation', 'nsteps', fallback=500000),
-            'nframe': config.getint('simulation', 'nframe', fallback=100),
-            'eqsteps': config.getint('simulation', 'eqsteps', fallback=50000),
-            'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
-            'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
-            'maxsol': config.getint('simulation', 'maxsol', fallback=0),
-        },
-        'PBSA':  {k:v for k,v in config.items('PBSA')}
-    }
+    paras = load_configue_file(conf)
     if decomposition:
         paras['PBSA']['modes'] += ',decomposition'
 
     if paras['simulation']['mode'] == 'em':
-        minim_peipline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+        minim_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'md':
         md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'input':

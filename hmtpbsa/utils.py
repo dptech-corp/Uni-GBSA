@@ -1,6 +1,7 @@
 import os
 import shutil
-from hmtpbsa.settings import logging, GMXEXE
+import configparser
+from hmtpbsa.settings import logging, GMXEXE, DEFAULT_CONFIGURE_FILE
 
 def obtain_id_from_index(indexFile):
     """
@@ -152,3 +153,25 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
 
     return outfile
 
+def load_configue_file(conf=None):
+    if conf is None:
+        conf = DEFAULT_CONFIGURE_FILE
+    config = configparser.ConfigParser()
+    config.read(conf)
+    paras = {
+        'simulation':{
+            'mode': config.get('simulation', 'mode', fallback='em'),
+            'boxtype' : config.get('simulation', 'boxtype', fallback='triclinic'),
+            'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
+            'conc': config.getfloat('simulation', 'conc', fallback=0.15),
+            'nsteps': config.getint('simulation', 'nsteps', fallback=500000),
+            'nframe': config.getint('simulation', 'nframe', fallback=100),
+            'eqsteps': config.getint('simulation', 'eqsteps', fallback=50000),
+            'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
+            'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
+            'maxsol': config.getint('simulation', 'maxsol', fallback=0),
+            'ligandCharge': config.get('simulation', 'ligandCharge', fallback='bcc'),
+        },
+        'PBSA':  {k:v for k,v in config.items('PBSA')}
+    }
+    return paras

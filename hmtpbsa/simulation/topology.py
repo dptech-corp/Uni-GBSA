@@ -117,7 +117,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     shutil.rmtree(proteinName)
     return prottop, protgro
 
-def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', verbose=False):
+def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', charge_method='bcc', verbose=False):
     """
     Build a topology file for a protein-ligand system
     
@@ -136,7 +136,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = receptor
 
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, verbose=verbose)
+        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 
