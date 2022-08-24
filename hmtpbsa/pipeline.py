@@ -3,6 +3,7 @@ import shutil
 import argparse
 import pandas as pd
 
+from hmtpbsa.version import __version__
 from hmtpbsa.pbsa.pbsarun import PBSA
 from hmtpbsa.utils import generate_index_file, load_configue_file
 from hmtpbsa.simulation.mdrun import GMXEngine
@@ -215,7 +216,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
 
 
 def main(args=None):
-    parser = argparse.ArgumentParser(description='GBSA Calculation.')
+    parser = argparse.ArgumentParser(description='GBSA Calculation.  Version: %s'%__version__)
     parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', required=True)
     parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
     parser.add_argument('-c', dest='config', help='Configue file, default: %s'%DEFAULT_CONFIGURE_FILE, default=DEFAULT_CONFIGURE_FILE)
@@ -225,6 +226,7 @@ def main(args=None):
     parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
     parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args(args)
     receptor, ligands, conf, ligdir, outfile, decomposition, nt, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.decomp, args.thread, args.verbose
