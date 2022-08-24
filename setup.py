@@ -40,6 +40,7 @@ setup(
          'hmtpbsa-buildtop = hmtpbsa.CLI:topol_builder',
          'hmtpbsa-buildsys = hmtpbsa.CLI:simulation_builder',
          'hmtpbsa-md = hmtpbsa.CLI:simulation_run',
+         'hmtpbsa-plots = hmtpbsa.CLI:mmpbsa_plot'
      ]},
     include_package_data=True
 )
