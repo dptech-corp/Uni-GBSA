@@ -234,6 +234,7 @@ def simulation_run():
     os.chdir(cwd)
 
 def traj_pipeline(args=None):
+    from hmtpbsa.pbsa.pbsarun import PBSA
     parser = argparse.ArgumentParser(description='Free energy calcaulated by PBSA method.')
     parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file for the trajectory.', required=True)
     parser.add_argument('-p', dest='TOP', help='Gromacs topol file for the system.', required=True)
@@ -267,6 +268,26 @@ def traj_pipeline(args=None):
     for k, v in detal_G.items():
         print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
 
+def mmpbsa_plot():
+    from hmtpbsa.pbsa import plots
+    parser = argparse.ArgumentParser(description='Analysis and plot results for MMPBSA.')
+    parser.add_argument('-i', help='MMPBSA result directory. Which contains FINAL_RESULTS_MMPBSA.dat, FINAL_DECOMP_MMPBSA.dat, EO.csv or DEO.csv file.', required=True)
+    parser.add_argument('-o', help='Figure output directory. default: analysis', default='analysis')
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
-if __name__ == "__main__":
-    main()
+
+    args = parser.parse_args()
+    inp, oup = args.i, args.o
+    filenames = ["FINAL_RESULTS_MMPBSA.dat", "FINAL_DECOMP_MMPBSA.dat", "EO.csv", "DEO.csv"]
+    funcdic = {
+        "FINAL_RESULTS_MMPBSA.dat": plots.analysis_FINAL,
+        "FINAL_DECOMP_MMPBSA.dat": plots.analysis_DECOMP,
+        "EO.csv": plots.analysis_traj_EO,
+        "DEO.csv": plots.analysis_traj_DEO
+    }
+    for fname in filenames:
+        datfile = os.path.join(inp, fname)
+        if os.path.exists(datfile):
+            func = funcdic[fname]
+            logging.info('Analysis file: %s'%fname)
+            func(datfile, outdir=oup)
