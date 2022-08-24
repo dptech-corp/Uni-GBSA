@@ -8,6 +8,9 @@ from .utils import generate_index_file, process_pbc
 
 from .simulation import topology, mdrun
 from .settings import logging
+from .version import __version__
+
+
 
 def PBC_main():
     parser = argparse.ArgumentParser(description='Auto process PBC for gromacs MD trajector.')
@@ -15,6 +18,7 @@ def PBC_main():
     parser.add_argument('-f', dest='xtc', help='Trajector file to process PBC.', required=True)
     parser.add_argument('-o', dest='out', help='Result file after processed PBC.', default=None)
     parser.add_argument('-n', dest='ndx', help='Index file contains the center and output group.', default=None)
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args()
     tprfile, trajfile, outfile, indexfile = args.tpr, args.xtc, args.out, args.ndx
@@ -34,6 +38,8 @@ def topol_builder():
     parser.add_argument('-o', dest='outdir', help='A output directory.', default='GMXtop')
     parser.add_argument('-c', help='Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True', action='store_true', default=True)
     parser.add_argument('-verbose', help='Keep the directory or not.', default=False, action='store_true')
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
+
     args = parser.parse_args()
     protein, ligand, outdir, cF = args.protein, args.ligand, args.outdir, args.c
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
@@ -83,6 +89,7 @@ def simulation_builder():
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
     parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args()
     proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
@@ -159,6 +166,7 @@ def simulation_run():
     parser.add_argument('-nstep', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
     parser.add_argument('-nframe', dest='nframe', help='Number of frame to save for the xtc file. default:100', default=100, type=int)
     parser.add_argument('-verbose', help='Keep all the files in the simulation.', action='store_true', default=False)
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
     args = parser.parse_args()
     proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
@@ -235,6 +243,7 @@ def traj_pipeline(args=None):
     parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
     parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
     parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
     
     if args is None:
         args = parser.parse_args()
