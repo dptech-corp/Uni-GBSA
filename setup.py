@@ -1,4 +1,20 @@
+import codecs
+import os.path
 from setuptools import setup, find_packages
+
+def read(rel_path):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with codecs.open(os.path.join(here, rel_path), 'r') as fp:
+        return fp.read()
+
+def get_version(rel_path):
+    for line in read(rel_path).splitlines():
+        if line.startswith('__version__'):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
 
 install_requires = [
 #        'mdanalysis>=2.0.0',
@@ -6,7 +22,7 @@ install_requires = [
 ]
 setup(
     name = 'hmtpbsa',
-    version='0.0.7_pre',
+    version=get_version("hmtpbsa/version.py"),
     author='dptech.net',
     author_email='hermite@dptech.net',
     description=('MMBPSA tools for calculate energy.'),
@@ -24,6 +40,7 @@ setup(
          'hmtpbsa-buildtop = hmtpbsa.CLI:topol_builder',
          'hmtpbsa-buildsys = hmtpbsa.CLI:simulation_builder',
          'hmtpbsa-md = hmtpbsa.CLI:simulation_run',
+         'hmtpbsa-plots = hmtpbsa.CLI:mmpbsa_plot'
      ]},
     include_package_data=True
 )

@@ -54,6 +54,8 @@ def read_DECOMP_output(datfile):
             data.append(tmp)
         elif line.startswith('Total Energy Decomposition'):
             tagName = lines[i-1].strip()
+        elif line.startswith('Residue') and not lines[i-1].startswith('Total Energy Decomposition'):
+            tagName = ''
     if len(data)>0:
         dic[etype] = pd.DataFrame(data, columns=header)
     return dic
