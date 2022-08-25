@@ -1,6 +1,6 @@
 name: hmtpbsa docker push
 on:
-  pull:
+  push:
     tags:
       - v*
 
