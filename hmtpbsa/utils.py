@@ -49,7 +49,7 @@ def generate_index_file(complexfile, pbc=False):
     cmd = '''%s make_ndx -f %s 2>&1 << EOF
            name 2 LIGAND
            q
-        EOF ''' % (GMXEXE, complexfile)
+        EOF''' % (GMXEXE, complexfile)
     fr = os.popen(cmd)
     text = fr.read().strip()
     if 'Error' in text:
