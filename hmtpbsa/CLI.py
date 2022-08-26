@@ -163,15 +163,16 @@ def simulation_run():
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
     parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
-    parser.add_argument('-nstep', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
+    parser.add_argument('-nsteps', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
     parser.add_argument('-nframe', dest='nframe', help='Number of frame to save for the xtc file. default:100', default=100, type=int)
+    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
     parser.add_argument('-verbose', help='Keep all the files in the simulation.', action='store_true', default=False)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
     args = parser.parse_args()
     proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
-    boxtype, box, conc, boxsize, nstep = args.boxtype, args.box, args.conc, args.d, args.nstep
+    boxtype, box, conc, boxsize, nsteps, nframe, nt = args.boxtype, args.box, args.conc, args.d, args.nstep, args.nframe, args.thread
     verbose = args.verbose
     if box:
         boxsize = box
@@ -202,7 +203,7 @@ def simulation_run():
 
         logging.info('Build simulation for %s'%proteinName)
         engine = mdrun.GMXEngine()
-        mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep, nframe=nframe)
+        mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nsteps=nsteps, nframe=nframe, nt=nt)
 
         shutil.copy(mdgro, os.path.join(outdir, '%s_system.gro'%proteinName))
         shutil.copy(topfile, os.path.join(outdir, '%s_system.top'%proteinName))
@@ -224,7 +225,7 @@ def simulation_run():
             logging.info('Building simulation for: %s'%ligandName)
             engine = mdrun.GMXEngine()
     
-            mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep, nframe=nframe)
+            mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nsteps=nsteps, nframe=nframe)
 
             shutil.copy(mdgro, "complex.gro")
             shutil.copy(topfile, "complex.top")
