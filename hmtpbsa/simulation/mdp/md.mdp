@@ -14,7 +14,7 @@ compressed-x-grps                = System    ; replaces xtc-grps
 ; Bond parameters
 continuation            = yes       ; Restarting after NPT
 constraint_algorithm    = lincs     ; holonomic constraints
-constraints             = all-bonds ; all bonds (even heavy atom-H bonds) constrained
+constraints             = h-bonds ; all bonds (even heavy atom-H bonds) constrained
 lincs_iter              = 1         ; accuracy of LINCS
 lincs_order             = 4         ; also related to accuracy
 ; Neighborsearching
