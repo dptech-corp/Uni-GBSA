@@ -1,3 +1,4 @@
+from email.policy import default
 import os
 import shutil
 import configparser
@@ -155,24 +156,47 @@ def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null")
     return outfile
 
 def load_configue_file(conf=None):
+    import json
     if conf is None:
         conf = DEFAULT_CONFIGURE_FILE
-    config = configparser.ConfigParser()
-    config.read(conf)
-    paras = {
-        'simulation':{
-            'mode': config.get('simulation', 'mode', fallback='em'),
-            'boxtype' : config.get('simulation', 'boxtype', fallback='triclinic'),
-            'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
-            'conc': config.getfloat('simulation', 'conc', fallback=0.15),
-            'nsteps': config.getint('simulation', 'nsteps', fallback=500000),
-            'nframe': config.getint('simulation', 'nframe', fallback=100),
-            'eqsteps': config.getint('simulation', 'eqsteps', fallback=50000),
-            'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
-            'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
-            'maxsol': config.getint('simulation', 'maxsol', fallback=0),
-            'ligandCharge': config.get('simulation', 'ligandCharge', fallback='bcc'),
-        },
-        'PBSA':  {k:v for k,v in config.items('PBSA')}
-    }
+    fileformat = os.path.split(conf)[-1].split('.')[-1]
+    if fileformat == 'json':
+        with open(conf) as fr:
+            paras =  json.load(fr)
+        default = {
+                "mode": "em",
+                "boxtype": "triclinic",
+                "boxsize": 0.9,
+                "conc": 0.15,
+                "nsteps": 500000,
+                "nframe": 100,
+                "eqsteps": 50000,
+                "proteinforcefield": "amber03",
+                "ligandforcefield": "gaff",
+                "maxsol": 0,
+                "ligandCharge": "bcc"
+            }
+        for k,v in default.items():
+            if k not in paras['simulation']:
+                paras['simulation'][k] = v
+    elif fileformat == 'ini':
+        config = configparser.ConfigParser()
+        config.read(conf)
+        paras = {
+                'simulation':{
+                'mode': config.get('simulation', 'mode', fallback='em'),
+                'boxtype' : config.get('simulation', 'boxtype', fallback='triclinic'),
+                'boxsize' : config.getfloat('simulation', 'boxsize', fallback=0.9),
+                'conc': config.getfloat('simulation', 'conc', fallback=0.15),
+                'nsteps': config.getint('simulation', 'nsteps', fallback=500000),
+                'nframe': config.getint('simulation', 'nframe', fallback=100),
+                'eqsteps': config.getint('simulation', 'eqsteps', fallback=50000),
+                'proteinforcefield': config.get('simulation', 'proteinforcefield', fallback='amber99sb-ildn'),
+                'ligandforcefield': config.get('simulation', 'ligandforcefield', fallback='gaff2'),
+                'maxsol': config.getint('simulation', 'maxsol', fallback=0),
+                'ligandCharge': config.get('simulation', 'ligandCharge', fallback='bcc'),
+            },
+            'PBSA':  {k:v for k,v in config.items('PBSA')}
+        }
+
     return paras
