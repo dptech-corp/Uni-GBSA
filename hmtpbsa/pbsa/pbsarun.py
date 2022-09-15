@@ -173,5 +173,5 @@ class PBSA(object):
             return
         deltaG, resG = parse_GMXMMPBSA_RESULTS(mmxsafile=mmxsafile)
         deltaG.to_csv(energyfile)
-        if resG:
+        if resG is not None:
             resG.to_csv(decfile)
