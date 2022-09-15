@@ -37,6 +37,7 @@ def topol_builder():
     parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
     parser.add_argument('-o', dest='outdir', help='A output directory.', default='GMXtop')
     parser.add_argument('-c', help='Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True', action='store_true', default=True)
+    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
     parser.add_argument('-verbose', help='Keep the directory or not.', default=False, action='store_true')
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
@@ -73,10 +74,10 @@ def topol_builder():
         ligandName = os.path.split(ligandfile)[-1][:-4]
         outtop, outcoord, outitp = os.path.join(outdir, ligandName+'.top'), os.path.join(outdir, ligandName+'.pdb'), os.path.join(outdir, ligandName+'.itp')
         # outcoord parameter is useless
-        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord, itpfile=outitp)
+        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord, itpfile=outitp, nt=args.thread)
         if cF:
             comxtop, comxcoord = os.path.join(outdir, "%s_%s.top"%(proteinName, ligandName)), os.path.join(outdir, "%s_%s.pdb"%(proteinName, ligandName))
-            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose)
+            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose, nt=args.thread)
 
 def simulation_builder():
     parser = argparse.ArgumentParser(description='Build MD simulation for input file.')
@@ -89,6 +90,7 @@ def simulation_builder():
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
     parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
+    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args()
@@ -120,7 +122,7 @@ def simulation_builder():
 
     if len(ligandfiles) == 0:
         logging.info('No ligand found, build protein only.')
-        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile)
+        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile, nt=args.thread)
 
         logging.info('Build simulation for %s'%proteinName)
         engine = mdrun.GMXEngine()
@@ -139,7 +141,7 @@ def simulation_builder():
             os.chdir(ligandName)
 
             logging.info('Build ligand topology: %s'%ligandName)
-            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield)
+            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield, nt=args.thread)
 
             logging.info('Building simulation for: %s'%ligandName)
             engine = mdrun.GMXEngine()
@@ -163,15 +165,16 @@ def simulation_run():
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
     parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
-    parser.add_argument('-nstep', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
+    parser.add_argument('-nsteps', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
     parser.add_argument('-nframe', dest='nframe', help='Number of frame to save for the xtc file. default:100', default=100, type=int)
+    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
     parser.add_argument('-verbose', help='Keep all the files in the simulation.', action='store_true', default=False)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
     args = parser.parse_args()
     proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
-    boxtype, box, conc, boxsize, nstep = args.boxtype, args.box, args.conc, args.d, args.nstep
+    boxtype, box, conc, boxsize, nsteps, nframe, nt = args.boxtype, args.box, args.conc, args.d, args.nstep, args.nframe, args.thread
     verbose = args.verbose
     if box:
         boxsize = box
@@ -198,11 +201,11 @@ def simulation_run():
 
     if len(ligandfiles) == 0:
         logging.info('No ligand found, build protein only.')
-        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile)
+        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile, nt=nt)
 
         logging.info('Build simulation for %s'%proteinName)
         engine = mdrun.GMXEngine()
-        mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep, nframe=nframe)
+        mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nsteps=nsteps, nframe=nframe, nt=nt)
 
         shutil.copy(mdgro, os.path.join(outdir, '%s_system.gro'%proteinName))
         shutil.copy(topfile, os.path.join(outdir, '%s_system.top'%proteinName))
@@ -219,12 +222,12 @@ def simulation_run():
             os.chdir(ligandName)
 
             logging.info('Build ligand topology: %s'%ligandName)
-            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield)
+            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield, nt=nt)
 
             logging.info('Building simulation for: %s'%ligandName)
             engine = mdrun.GMXEngine()
     
-            mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nstep=nstep, nframe=nframe)
+            mdgro, mdxtc, topfile = engine.run_to_md(grofile, topfile, rundir=None, boxtype=boxtype, boxsize=boxsize, conc=conc, nsteps=nsteps, nframe=nframe, nt=nt)
 
             shutil.copy(mdgro, "complex.gro")
             shutil.copy(topfile, "complex.top")

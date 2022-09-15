@@ -1,12 +1,12 @@
 import os
 import shutil
-import logging
-import argparse
+import pandas as pd
 
-from hmtpbsa.settings import PBSA_VERSION, gmx_MMPBSA, MPI
+from hmtpbsa.settings import gmx_MMPBSA, MPI, logging
 from hmtpbsa.utils import obtain_id_from_index
 from hmtpbsa.pbsa.utils import obtain_num_of_frame
 from hmtpbsa.pbsa.parameters import generate_input_file
+from hmtpbsa.pbsa.io import parse_GMXMMPBSA_RESULTS
 
 
 '''
@@ -18,6 +18,7 @@ class PBSA(object):
     def __init__(self, workdir='MMPBSA') -> None:
         self.workdir = os.path.abspath(workdir)
         self.cwd = os.getcwd()
+        self.verbose = 0
 
     def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1):
         """
@@ -44,7 +45,7 @@ class PBSA(object):
             trajectoryfile = os.path.abspath('com_traj.%s'%ext)
         if mmpbsafile is None:
             mmpbsafile = generate_input_file(pbsaParas, outfile='mmpbsa.in')
-            shutil.copy(mmpbsafile, '../mmpbsa.in')
+            #shutil.copy(mmpbsafile, '../mmpbsa.in')
         mmpbsafile = os.path.abspath(mmpbsafile)
             
         # mode='gb', outfile='mmpbsa.in', startFrame=1, endFrame=1, interval=1, temperature=300, igbValue=2, name='Calculate', decompose=False
@@ -58,6 +59,8 @@ class PBSA(object):
             'topolfile': topolfile,
             'receptor': receptor,
             'ligand': ligand,
+            'eofile':'FINAL_EO_MMPBSA.csv',
+            'deofile':'FINAL_DEO_MMPBSA.csv',
             'numthread':nt
         }
         return mmpbsafile
@@ -72,17 +75,18 @@ class PBSA(object):
         #print("="*80)
         logging.info('Run the MMPB(GB)SA.')
         if self.nframe > 2 and MPI:
-            cmd = 'mpirun --use-hwthread-cpus --allow-run-as-root -np {numthread} {gmx_MMPBSA} MPI -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
+            cmd = 'mpirun --use-hwthread-cpus --allow-run-as-root -np {numthread} \
+                {gmx_MMPBSA} MPI -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
         else:
             cmd = '{gmx_MMPBSA} MPI -i {mmpbsa} -cs {complexfile} -ci {indexfile} -ct {trajectoryfile} -cp {topolfile} -cg {receptor} {ligand} -nogui >mmpbsa.log 2>&1 '.format(**self.paras)
         RC = os.system(cmd)
         if RC != 0:
             raise Exception('ERROR run: %s \nPlease ckeck the log file for details: %s'%(cmd, os.path.abspath("mmpbsa.log")))
-        shutil.copy('FINAL_RESULTS_MMPBSA.dat', self.cwd)
-        outfile = "FINAL_RESULTS_MMPBSA.dat"
+        self.save_results(energyfile='../Energy.csv', decfile='../Dec.csv')
+        self.verbose = verbose
         self.clean(verbose=verbose)
-        #print('='*80)
-        print('Results: %s'%outfile)
+        print('='*80)
+        print('Results: Energy.csv Dec.csv')
 
     def clean(self, verbose=0):
         """
@@ -99,11 +103,11 @@ class PBSA(object):
             shutil.rmtree(self.workdir)
         os.chdir(self.cwd)
 
-    def extract_result(self, energyfile='FINAL_RESULTS_MMPBSA.dat'):
-        if PBSA_VERSION >=1.5:
-            return self.extract_result_v15(energyfile=energyfile)
-        else:
-            return self.extract_result_v14(energyfile=energyfile)
+    def extract_result(self, energyfile='Energy.csv'):
+        if not os.path.exists(energyfile):
+            logging.error('Not found energyfile: %s'%energyfile)
+        df = pd.read_csv(energyfile)
+        return df
 
     def extract_result_v14(self, energyfile='FINAL_RESULTS_MMPBSA.dat'):
         """
@@ -160,3 +164,14 @@ class PBSA(object):
                     else:
                         logging.warning("Found a DELTA G without name!")
         return detal_G
+        
+    def save_results(self, energyfile='Energy.csv', decfile='Dec.csv', mmxsafile=None):
+        if mmxsafile is None:
+            mmxsafile = os.path.join(self.workdir, 'COMPACT_MMXSA_RESULTS.mmxsa')
+        if not os.path.exists(mmxsafile):
+            logging.warning('Not found mmxsa file!')
+            return
+        deltaG, resG = parse_GMXMMPBSA_RESULTS(mmxsafile=mmxsafile)
+        deltaG.to_csv(energyfile)
+        if resG:
+            resG.to_csv(decfile)

@@ -8,7 +8,7 @@ import logging
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 DEFAULT_CONFIGURE_FILE = os.path.dirname(os.path.abspath(__file__))+ '/data/default.ini'
-
+TEMPLATE_TOP = os.path.dirname(os.path.abspath(__file__))+ '/data/template.json'
 PBSA_PARAMETER_FILE = os.path.dirname(os.path.abspath(__file__))+ '/data/mmpbsa.in'
 
 # base configure
