@@ -50,7 +50,7 @@ class TestPipline(unittest.TestCase):
         os.chdir(workdir)
         paras = load_configue_file()
         traj_pipeline(pdbfile, pdbfile, topfile, indexfile, pbsaParas=paras['PBSA'])
-        EF = os.path.exists('FINAL_RESULTS_MMPBSA.dat')
+        EF = os.path.exists('Energy.csv')
         self.assertTrue(EF)
         os.chdir(cwd)
         shutil.rmtree(workdir)
