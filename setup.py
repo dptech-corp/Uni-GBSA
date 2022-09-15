@@ -35,7 +35,7 @@ setup(
     #packages=packages,
     entry_points={'console_scripts': [
          'hmtpbsa-pipeline = hmtpbsa.pipeline:main',
-         'hmtpbsa-traj = hmtpbsa.pbsa.pbsarun:main',
+         'hmtpbsa-traj = hmtpbsa.CLI:traj_pipeline',
          'hmtpbsa-pbc = hmtpbsa.CLI:PBC_main',
          'hmtpbsa-buildtop = hmtpbsa.CLI:topol_builder',
          'hmtpbsa-buildsys = hmtpbsa.CLI:simulation_builder',

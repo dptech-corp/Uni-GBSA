@@ -2,14 +2,15 @@ import os
 import sys
 
 import uuid
+import json
 import shutil
 import parmed as pmd
 
-from hmtpbsa.settings import GMXEXE, OMP_NUM_THREADS
+from hmtpbsa.settings import GMXEXE,TEMPLATE_TOP
 from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain
 
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -36,7 +37,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     cwd = os.getcwd()
     os.chdir(ligandName)
     paras = {
-        'thread':OMP_NUM_THREADS,
+        'thread': nt,
         'ligandfile': ligandfile,
         'forcefield': forcefield,
         'method': charge_method,
@@ -100,8 +101,8 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     
     engine = GMXEngine()
     boxpdb = engine.gmx_box('1-pdb2gmx.pdb', boxtype='triclinic', boxsize=0.9)
-    solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=5)
-    ionspdb = engine.gmx_ions(solpdb, 'topol.top', conc=None, nNA=1, nCL=1, neutral=False)
+    #solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=5)
+    #ionspdb = engine.gmx_ions(solpdb, 'topol.top', conc=None, nNA=1, nCL=1, neutral=False)
     #engine.
     protgro = pmd.load_file('1-pdb2gmx.pdb', structure=True)
     #load_position_restraints('topol.top')
@@ -117,7 +118,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     shutil.rmtree(proteinName)
     return prottop, protgro
 
-def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', charge_method='bcc', verbose=False):
+def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn', ligandforce='gaff2', charge_method='bcc', nt=1, verbose=False):
     """
     Build a topology file for a protein-ligand system
     
@@ -136,7 +137,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = receptor
 
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, verbose=verbose)
+        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, nt=nt, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 
@@ -147,28 +148,40 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         sysgro = molgro + protgro
     systop.write(outtop)
     sysgro.write_pdb(outpdb)
-    lines = []
-    CF = 0
-    records = ('NA', 'CL', 'SOL')
+    newlines = []
+    mtypes = []
     with open(outtop) as fr:
-        for line in fr:
-            if line.startswith('[') and line.split()[1]=='molecules':
-                CF = 3
-                lines.append('\n; Include Position restraint file\n#ifdef POSRES\n\n#endif\n')
-            if line.startswith(records) and CF:
-                tmp = line.strip().split()
-                molname, molnum = tmp[0], int(tmp[1])-1
-                if molname == 'SOL':
-                    molnum -= 2
-                if molnum > 1:
-                    line = '%s        %d\n'%(molname, molnum)
-                else:
-                    line = ''
-                CF -= 1
-            lines.append(line)
+        lines = fr.readlines()
+        for i,line in enumerate(lines):
+            if line.startswith('[') and line.split()[1]=='system':
+                fr = open(TEMPLATE_TOP)
+                template = json.load(fr)
+                fr.close()
+                for k, v in template.items():
+                    if k not in mtypes:
+                        newlines.append(v)
+            elif line.startswith('[') and line.split()[1]=='moleculetype':
+                for l in lines[i+1:]:
+                    if l.startswith('['):
+                        break
+                    elif l.strip() and not l.startswith(';'):
+                        mtypes.append(l.split()[0])
+                        break
+
+            newlines.append(line)
+    atomtypes = {
+        'NA':  'Na      Na        22.990000  0.00000000  A        0.33284      0.0115897',
+        'CL':  'Cl      Cl        35.450000  0.00000000  A       0.440104         0.4184',
+        'SOL': 'OW      OW        16.000000  0.00000000  A       0.315061       0.636386\nHW      HW         1.008000  0.00000000  A              0              0',
+    }
     with open(outtop, 'w') as fw:
-        for line in lines:
+        for line in newlines:
             fw.write(line)
+            if line.startswith('[') and line.split()[1]=='atomtypes':
+                for k,v in atomtypes.items():
+                    if k not in mtypes:
+                        fw.write(v+'\n')
+            
     write_position_restrain(outtop)
 
 def main():
@@ -177,7 +190,7 @@ def main():
     grofile = 'sys.pdb'
     topfile = 'sys.top'
 
-    build_topol(pdbfile, ligandfile, outpdb=grofile, outtop=topfile)
+    build_topol(pdbfile, ligandfile, outpdb=grofile, outtop=topfile, nt=4)
 
     engine = GMXEngine()
     engine.run_to_md(grofile, topfile)

@@ -2,7 +2,7 @@
 define          = -DFLEXIBLE
 constraints     = none
 integrator  = steep     ; Algorithm (steep = steepest descent minimization)
-emtol       = 100.0    ; Stop minimization when the maximum force < 1000.0 kJ/mol/nm
+emtol       = 1000.0    ; Stop minimization when the maximum force < 1000.0 kJ/mol/nm
 emstep      = 0.01      ; Energy step size
 nsteps      = 50000      ; Maximum number of (minimization) steps to perform
 
