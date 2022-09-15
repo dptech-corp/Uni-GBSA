@@ -1,6 +1,7 @@
 import os
 import shutil
 import argparse
+import traceback
 import pandas as pd
 
 from hmtpbsa.version import __version__
@@ -10,6 +11,7 @@ from hmtpbsa.simulation.mdrun import GMXEngine
 from hmtpbsa.simulation.topology import build_topol, build_protein
 from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE, set_OMP_NUM_THREADS
 
+KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL', 'status']
 def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1, verbose=False):
     """
     A pipeline for calculate GBSA/PBSA for trajectory
@@ -37,9 +39,9 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
-    print("mode    detal_G(kcal/mole)    Std. Dev.")
-    for k, v in detal_G.items():
-        print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
+    print("Frames    mode    detal_G(kcal/mole)")
+    for i, irow in detal_G.iterrows():
+        print('%6d    %4s    %18.4f  '%(irow['Frames'], irow['mode'], irow['TOTAL']))
     return detal_G
 
 def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfile='BindingEnergy.csv', verbose=False):
@@ -57,15 +59,15 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
     receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
-
-    detalGdict = {'name':[]}
-    for k in ['GB','PB', 'gb', 'pb']:
-        if k in pbsaParas['modes']:
-            detalGdict[k.upper()] = []
-            detalGdict['%s_err'%k.upper()] = []
     
     cwd = os.getcwd()
+    df = None
+    ligandnames = []
+    status = []
+    pbsaParas = paras['PBSA']
+    d = pd.DataFrame({'Frames': 1, 'mode':pbsaParas['modes'], 'complex':0.0,'receptor':0.0,'ligand':0.0,'Internal':0.0,'Van der Waals':0.0,'Electrostatic':0,'Polar Solvation':0.0,'Non-Polar Solvation':0.0,'Gas':0.0,'Solvation':0.0,'TOTAL':0.0}, index=[1])
     for ligandfile in ligandfiles:
+        statu = 'S'
         ligandfile = os.path.abspath(ligandfile)
         ligandName = os.path.split(ligandfile)[-1][:-4]
         if not os.path.exists(ligandName):
@@ -75,18 +77,37 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
         grofile = 'complex.pdb'
         topfile = 'complex.top'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
+        try:
+            build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'], nt=nt)
+        except Exception as e:
+            if len(ligandfiles)==1:
+                traceback.print_exc()
+            statu = 'F_top'
+            dl = d
+            logging.warning('Failed to generate forcefield for ligand: %s'%ligandName)
 
         indexfile = generate_index_file(grofile)
-        pbsaParas = paras['PBSA']
-        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
-        detalGdict['name'].append(ligandName)
-        for k,v in detalG.items():
-            detalGdict[k.upper()].append(v[0])
-            detalGdict["%s_err"%k.upper()].append(v[1])
+        
+        if statu == 'S':
+            try:
+                dl = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+            except:
+                if len(ligandfiles)==1:
+                    traceback.print_exc()
+                statu = 'F_GBSA'
+                dl = d
+                logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
+        ligandnames.append(ligandName)
+        status.append(statu)
+        if df is None:
+            df = dl
+        else:
+            df = pd.concat([df, dl])
         os.chdir(cwd)
-    df = pd.DataFrame(detalGdict)
-    df.to_csv(outfile, index=False)
+    df['ligandName'] = ligandnames
+    df['status'] = status
+    df[KEY].to_csv(outfile, index=False)
+
 
 
 def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', verbose=False):
@@ -105,15 +126,14 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
     receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
-
-    detalGdict = {'name':[]}
-    for k in ['GB','PB', 'gb', 'pb']:
-        if k in pbsaParas['modes']:
-            detalGdict[k.upper()] = []
-            detalGdict['%s_err'%k.upper()] = []
     
     cwd = os.getcwd()
+    df = None
+    ligandnames = []
+    status = []
+    d = pd.DataFrame({'Frames': 1, 'mode':pbsaParas['modes'], 'complex':0.0,'receptor':0.0,'ligand':0.0,'Internal':0.0,'Van der Waals':0.0,'Electrostatic':0,'Polar Solvation':0.0,'Non-Polar Solvation':0.0,'Gas':0.0,'Solvation':0.0,'TOTAL':0.0}, index=[1])
     for ligandfile in ligandfiles:
+        statu = 'S'
         ligandfile = os.path.abspath(ligandfile)
         ligandName = os.path.split(ligandfile)[-1][:-4]
         if not os.path.exists(ligandName):
@@ -123,14 +143,26 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         grofile = 'complex.pdb'
         topfile = 'complex.top'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
+        try:
+            build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'], nt=nt)
+        except Exception as e:
+            if len(ligandfiles)==1:
+                traceback.print_exc()
+            statu = 'F_top'
+            dl = d
+            logging.warning('Failed to generate forcefield for ligand: %s'%ligandName)   
 
         logging.info('Running energy minimization: %s'%ligandName)
         engine = GMXEngine()
+        try:
+            minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=nt)
+        except Exception as e:
+            if len(ligandfiles)==1:
+                traceback.print_exc()
+            statu = 'F_md'
+            dl = d
+            logging.warning('Failed to run simulation for ligand: %s'%ligandName)  
 
-        #minimgro, outtop = engine.run_to_minim_pbsa(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'])
-        minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=nt)
-    
         cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
         RC = os.system(cmd)
         if RC!=0:
@@ -138,16 +170,29 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         shutil.copy(topfile, outtop)
 
         indexfile = generate_index_file(grofile)
-        detalG = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt, verbose=verbose)
-        detalGdict['name'].append(ligandName)
-        for k,v in detalG.items():
-            detalGdict[k.upper()].append(v[0])
-            detalGdict["%s_err"%k.upper()].append(v[1])
+        if statu == 'S':
+            try:
+                dl = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+            except:
+                if len(ligandfiles)==1:
+                    traceback.print_exc()
+                statu = 'F_GBSA'
+                dl = d
+                logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
+        ligandnames.append(ligandName)
+        status.append(statu)
+        if df is None:
+            df = dl
+        else:
+            df = pd.concat([df, dl])
         if not verbose:
             engine.clean(pdbfile=grofile)
         os.chdir(cwd)
-    df = pd.DataFrame(detalGdict)
-    df.to_csv(outfile, index=False)
+
+        os.chdir(cwd)
+    df['ligandName'] = ligandnames
+    df['status'] = status
+    df[KEY].to_csv(outfile, index=False)
 
 def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', verbose=False):
     """
@@ -165,13 +210,11 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
     receptor = build_protein(receptorfile, forcefield=simParas['proteinforcefield'])
-    detalGdict = {'name':[]}
-    for k in ['GB','PB', 'gb', 'pb']:
-        if k in pbsaParas['modes']:
-            detalGdict[k.upper()] = []
-            detalGdict['%s_err'%k.upper()] = []
 
     cwd = os.getcwd()
+    df = None
+    ligandnames = []
+    status = []
     for ligandfile in ligandfiles:
         print('='*80)
         ligandfile = os.path.abspath(ligandfile)
@@ -184,7 +227,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         topfile = 'complex.top'
         xtcfile = 'traj_com.xtc'
         logging.info('Build ligand topology: %s'%ligandName)
-        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'])
+        build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=simParas['ligandforcefield'], charge_method=simParas['ligandCharge'], nt=nt)
 
         logging.info('Running simulation: %s'%ligandName)
         engine = GMXEngine()
@@ -203,16 +246,19 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         indexfile = generate_index_file(grofile)
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
-        detalG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt, verbose=verbose)
-        detalGdict['name'].append(ligandName)
-        for k,v in detalG.items():
-            detalGdict[k.upper()].append(v[0])
-            detalGdict["%s_err"%k.upper()].append(v[1])
+        deltaG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt, verbose=verbose)
+        ligandnames.extend([ligandName]*simParas['nframe'])
+        status.extend(['S']*simParas['nframe'])
+        if df is None:
+            df = deltaG
+        else:
+            df = pd.concat([df, deltaG])
         if not verbose:
             engine.clean(pdbfile=grofile)
         os.chdir(cwd)
-    df = pd.DataFrame(detalGdict)
-    df.to_csv(outfile, index=False)
+    df['ligandName'] = ligandnames
+    df['status'] = status
+    df[KEY].to_csv(outfile, index=False)
 
 
 def main(args=None):
@@ -242,8 +288,6 @@ def main(args=None):
 
     if not os.path.exists(conf):
         raise Exception("Not found the configure file! %s"%conf)
-    #config = configparser.ConfigParser()
-    #config.read(conf)
 
     mmpbsafile = os.path.abspath(args.pbsafile) if args.pbsafile else args.pbsafile
     set_OMP_NUM_THREADS(nt)
