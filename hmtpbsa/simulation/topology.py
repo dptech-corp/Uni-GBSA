@@ -8,7 +8,7 @@ import parmed as pmd
 
 from hmtpbsa.settings import GMXEXE,TEMPLATE_TOP
 from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain
+from hmtpbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain, fix_insertions
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
     """
@@ -85,10 +85,11 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
     pdbfile = os.path.abspath(pdbfile)
     cwd = os.getcwd()
     os.chdir(proteinName)
+    fix_insertions(pdbfile, 'begain.pdb')
     paras = {
         'gmx':GMXEXE,
-        'pdbfile':pdbfile,
-        'outfile': '1-pdb2gmx.pdb',
+        'pdbfile':'begain.pdb',
+        'outfile': '1-pdb2gmx.gro',
         'topolfile': 'topol.top',
         'forcefield': forcefield,
     }
@@ -100,11 +101,11 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
         raise Exception('ERROR run gmx! see the log file for details %s'%os.path.abspath("gromacs.log"))
     
     engine = GMXEngine()
-    boxpdb = engine.gmx_box('1-pdb2gmx.pdb', boxtype='triclinic', boxsize=0.9)
+    boxpdb = engine.gmx_box('1-pdb2gmx.gro', boxtype='triclinic', boxsize=0.9)
     #solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=5)
     #ionspdb = engine.gmx_ions(solpdb, 'topol.top', conc=None, nNA=1, nCL=1, neutral=False)
     #engine.
-    protgro = pmd.load_file('1-pdb2gmx.pdb', structure=True)
+    protgro = pmd.load_file('1-pdb2gmx.gro', structure=True)
     #load_position_restraints('topol.top')
     prottop  = pmd.load_file('topol.top')
     if outtop:

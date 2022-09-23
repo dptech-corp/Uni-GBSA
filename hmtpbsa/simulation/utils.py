@@ -159,3 +159,94 @@ def write_position_restrain(topfile, outfile=None, fc=[1000, 1000, 1000], exclud
         fw.write(line)
     fw.close()
     return outfile
+
+def fix_insertions(pdbfile, outfile=None):
+    """
+    Delete insertion codes (at specific residues).
+
+    By default, removes ALL insertion codes on ALL residues. Also bumps
+    the residue numbering of residues downstream of each insertion.
+
+    This function is a generator.
+
+    Parameters
+    ----------
+    fhandle : a line-by-line iterator of the original PDB file.
+
+    option_list : list
+        List of insertion options to act on.
+        Example ["A9", "B12"]. An empty list performs the default
+        action.
+
+    Yields
+    ------
+    str (line-by-line)
+        The modified (or not) PDB line.
+    """
+
+    # Keep track of residue numbering
+    # Keep track of residues read (chain, resname, resid)
+    offset = 0
+    prev_resi = None
+    seen_ids = set()
+    clean_icode = False
+    records = ('ATOM', 'HETATM', 'ANISOU')
+    with open(pdbfile) as fr:
+        lines = fr.readlines()
+    if outfile is None:
+        outfile = pdbfile
+    fw = open(outfile, 'w')
+    residMapping = {}
+    residMappingBack = {}
+    has_insertion = False
+    for line in lines:
+
+        if line.startswith(records):
+            res_uid = line[17:27]  # resname, chain, resid, icode
+            id_res = line[21] + line[22:26].strip()  # A99, B12
+            has_icode = line[26].strip()  # ignore ' ' here
+            # unfortunately, this is messy but not all PDB files follow a nice
+            # order of ' ', 'A', 'B', ... when it comes to insertion codes..
+            if prev_resi != res_uid:  # new residue
+                # Does it have an insertion code
+                # OR have we seen this chain + resid combination before?
+                # #2 to catch insertions WITHOUT icode ('A' ... ' ' ... 'B')
+                if (has_icode or id_res in seen_ids):
+                    # Do something about it
+                    # if the user provided options and this residue is in them
+                    # OR if the user did not provide options
+                    clean_icode = True
+                else:
+                    clean_icode = False
+
+                prev_resi = res_uid
+
+                if id_res in seen_ids:  # offset only if we have seen this res.
+                    offset += 1
+
+            # Modify resid if necessary
+            oldresid = int(line[22:26])
+            resid = oldresid + offset
+            chainID = line[21]
+            if chainID not in residMapping:
+                residMapping[chainID] = {str(oldresid):resid}
+                residMappingBack[chainID] = {resid:str(oldresid)}
+            else:
+                if str(oldresid) in residMapping[chainID]:
+                    residMapping[chainID].update({"%d%s"%(oldresid, line[26].strip()):resid})
+                    residMappingBack[chainID].update({resid:"%d%s"%(oldresid, line[26].strip())})
+                else:
+                    residMapping[chainID].update({str(oldresid):resid})
+                    residMappingBack[chainID].update({resid:str(oldresid)})
+            if clean_icode:  # remove icode
+                line = line[:26] + ' ' + line[27:]
+            line = line[:22] + str(resid).rjust(4) + line[26:]
+            seen_ids.add(id_res)
+
+            # Reset offset on TER
+            if line.startswith('TER'):
+                offset = 0
+
+        fw.write(line)
+    fw.close()
+    return residMapping, residMappingBack
