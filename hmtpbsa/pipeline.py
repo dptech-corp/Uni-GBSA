@@ -97,8 +97,8 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
                 statu = 'F_GBSA'
                 dl = d
                 logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
-        ligandnames.append(ligandName)
-        status.append(statu)
+        ligandnames.extend([ligandName]*len(dl))
+        status.extend([statu]*len(dl))
         if df is None:
             df = dl
         else:
@@ -179,8 +179,8 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
                 statu = 'F_GBSA'
                 dl = d
                 logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
-        ligandnames.append(ligandName)
-        status.append(statu)
+        ligandnames.extend([ligandName]*len(dl))
+        status.extend([statu]*len(dl))
         if df is None:
             df = dl
         else:
