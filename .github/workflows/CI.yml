@@ -4,7 +4,7 @@ on: [push]
 jobs:
   MMPBSA_unittest:
     runs-on: self-hosted
-    container: dockerymh/hmtpbsa:gmx_openmpi
+    container: dockerymh/hmtpbsa:gmx_openmpi_patch
     
     steps:
     - name: checkout repo
