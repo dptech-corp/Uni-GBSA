@@ -1,10 +1,7 @@
-# Hermite-MMPBSA
+# Uni-GBSA
 ## Backgroud
 
-Molecular mechanics Poisson Boltzmann surface area (MM/PBSA) and molecular mechanics generalized Boltzmann surface area (MM/GBSA) are one of the most widely used binding free energy prediction methods in the past 10 years. Compared with the scoring function of most molecular docking, MM/GB(PB)SA is more accurate and less computational. It has been widely used in protein folding, protein ligand binding, protein-protein interaction and other biomolecular research.
-
-see the [MM/GB(PB)SA介绍](!https://dptechnology.feishu.cn/wiki/wikcnfUDQ1sL2oXAl5GVDQhzzSb)
-
+Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(PB)SA), which balance accuracy and efficiency, is a good choice for evaluating binding free energy in virtual screening. Uni-GBSA, an automatic workflow to perform MM/GB(PB)SA calculations from force field building, structure optimization to free energy calculation. 
 
 ## Install
 ### Install by conda
@@ -12,8 +9,8 @@ see the [MM/GB(PB)SA介绍](!https://dptechnology.feishu.cn/wiki/wikcnfUDQ1sL2oX
 conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 openmpi mpi4py gromacs
 conda activate amber21
 pip install gmx_MMPBSA
-git clone https://github.com/dptech-corp/Hermite-MMPBSA.git
-cd Hermite-MMPBSA
+git clone https://github.com/dptech-corp/Uni-GBSA.git
+cd Uni-GBSA
 python setup.py install
 ```
 
