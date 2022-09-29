@@ -19,6 +19,8 @@ class PBSA(object):
         self.workdir = os.path.abspath(workdir)
         self.cwd = os.getcwd()
         self.verbose = 0
+        self.deltaG = None
+        self.resG = None
 
     def set_paras(self, complexfile, trajectoryfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1):
         """
@@ -82,7 +84,7 @@ class PBSA(object):
         RC = os.system(cmd)
         if RC != 0:
             raise Exception('ERROR run: %s \nPlease ckeck the log file for details: %s'%(cmd, os.path.abspath("mmpbsa.log")))
-        self.save_results(energyfile='../Energy.csv', decfile='../Dec.csv')
+        self.save_results()
         self.verbose = verbose
         self.clean(verbose=verbose)
         print('='*80)
@@ -104,10 +106,9 @@ class PBSA(object):
         os.chdir(self.cwd)
 
     def extract_result(self, energyfile='Energy.csv'):
-        if not os.path.exists(energyfile):
-            logging.error('Not found energyfile: %s'%energyfile)
-        df = pd.read_csv(energyfile)
-        return df
+        if self.deltaG is None:
+             self.save_results()
+        return self.deltaG
 
     def extract_result_v14(self, energyfile='FINAL_RESULTS_MMPBSA.dat'):
         """
@@ -165,13 +166,10 @@ class PBSA(object):
                         logging.warning("Found a DELTA G without name!")
         return detal_G
         
-    def save_results(self, energyfile='Energy.csv', decfile='Dec.csv', mmxsafile=None):
+    def save_results(self, mmxsafile=None):
         if mmxsafile is None:
             mmxsafile = os.path.join(self.workdir, 'COMPACT_MMXSA_RESULTS.mmxsa')
         if not os.path.exists(mmxsafile):
             logging.warning('Not found mmxsa file!')
             return
-        deltaG, resG = parse_GMXMMPBSA_RESULTS(mmxsafile=mmxsafile)
-        deltaG.to_csv(energyfile)
-        if resG is not None:
-            resG.to_csv(decfile)
+        self.deltaG, self.resG = parse_GMXMMPBSA_RESULTS(mmxsafile=mmxsafile)
