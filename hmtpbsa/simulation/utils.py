@@ -1,5 +1,5 @@
-
 import os
+from rdkit import Chem
 from hmtpbsa.settings import GMXEXE
 def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
     """
@@ -250,3 +250,13 @@ def fix_insertions(pdbfile, outfile=None):
         fw.write(line)
     fw.close()
     return residMapping, residMappingBack
+
+
+def prepare_ligand(molfile, outfile=None):
+    if outfile is None:
+        outfile = molfile
+    mol = Chem.MolFromMolFile(molfile)
+    mol_out = Chem.rdmolops.AddHs(mol, addCoords=True)
+    Chem.MolToMolFile(mol_out, outfile)
+    return outfile
+
