@@ -148,6 +148,7 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
         except Exception as e:
             if len(ligandfiles)==1:
                 traceback.print_exc()
+                exit(256)
             statu = 'F_top'
             dl = d
             logging.warning('Failed to generate forcefield for ligand: %s'%ligandName)   
@@ -158,16 +159,17 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
             minimgro, outtop = engine.run_to_minim(grofile, topfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=nt)
             cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, minimgro, grofile)
             RC = os.system(cmd)
+            if RC!=0:
+                raise Exception('Error convert %s to %s'%(minimgro, grofile))
+            shutil.copy(topfile, outtop)
         except Exception as e:
             if len(ligandfiles)==1:
                 traceback.print_exc()
+                exit(256)
             statu = 'F_md'
             dl = d
             logging.warning('Failed to run simulation for ligand: %s'%ligandName)  
 
-        if RC!=0:
-            raise Exception('Error convert %s to %s'%(minimgro, grofile))
-        shutil.copy(topfile, outtop)
 
         indexfile = generate_index_file(grofile)
         if statu == 'S':
