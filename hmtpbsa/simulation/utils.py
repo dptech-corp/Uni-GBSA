@@ -1,5 +1,4 @@
 import os
-from rdkit import Chem
 from hmtpbsa.settings import GMXEXE
 def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
     """
@@ -253,6 +252,7 @@ def fix_insertions(pdbfile, outfile=None):
 
 
 def prepare_ligand(molfile, outfile=None):
+    from rdkit import Chem
     if outfile is None:
         outfile = molfile
     mol = Chem.MolFromMolFile(molfile)
