@@ -164,13 +164,15 @@ def read_EO_output(csvfile):
     return dic
 
 def parse_GMXMMPBSA_RESULTS(mmxsafile):
-    RC = os.system(f'mmxsaparse -i {mmxsafile} -o . ')
+    outdir = os.path.abspath(os.path.split(mmxsafile)[0]+'/../')
+    RC = os.system(f'mmxsaparse -i {mmxsafile} -o {outdir} ')
     if RC!=0:
         raise Exception('Error parse the output from %s'%mmxsafile)
-    
-    deltaG = pd.read_csv('Energy.csv')
-    if os.path.exists('Dec.csv'):
-        resG = pd.read_csv('Dec.csv')
+    energyfile = os.path.join(outdir, 'Energy.csv') 
+    decfile = os.path.join(outdir, 'Dec.csv')
+    deltaG = pd.read_csv(energyfile)
+    if os.path.exists(decfile):
+        resG = pd.read_csv(decfile)
     else:
         resG = None
     return deltaG, resG

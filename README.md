@@ -8,7 +8,7 @@ Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(P
 ```Bash
 conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 openmpi mpi4py gromacs
 conda activate amber21
-pip install gmx_MMPBSA
+pip install gmx_MMPBSA lickit
 git clone https://github.com/dptech-corp/Uni-GBSA.git
 cd Uni-GBSA
 python setup.py install
@@ -28,7 +28,7 @@ RUN conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 gromacs 
 
 # 2. install requirments
 RUN source ~/.bashrc \ 
-&&  pip install gmx_MMPBSA \
+&&  pip install gmx_MMPBSA lickit \
 &&  rm -rf ~/.cache/*
 
 # 3. install hmtpbsa
