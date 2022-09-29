@@ -14,7 +14,7 @@ class GMXEngine(BaseObject):
     def __init__(self) -> None:
         super().__init__()
 
-    def _grompp(self,pdbfile, topfile, name, mdpfile, maxwarn=1):
+    def _grompp(self,pdbfile, topfile, name, mdpfile, maxwarn=5):
         """
         This function takes a pdb file, a topology file, a name for the output tpr file, and a mdp file as
             input. 
