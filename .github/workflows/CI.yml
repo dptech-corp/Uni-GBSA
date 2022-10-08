@@ -10,7 +10,7 @@ jobs:
     - name: checkout repo
       uses: actions/checkout@v2
         
-    - name: install hmtpbsa
+    - name: install unigbsa
       shell: bash
       run: |
         source activate amber21

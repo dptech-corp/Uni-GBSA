@@ -237,7 +237,7 @@ def simulation_run():
     os.chdir(cwd)
 
 def traj_pipeline(args=None):
-    from unigbsa.pbsa.pbsarun import PBSA
+    from unigbsa.gbsa.pbsarun import PBSA
     parser = argparse.ArgumentParser(description='Free energy calcaulated by PBSA method.')
     parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file for the trajectory.', required=True)
     parser.add_argument('-p', dest='TOP', help='Gromacs topol file for the system.', required=True)
@@ -272,7 +272,7 @@ def traj_pipeline(args=None):
         print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
 
 def mmpbsa_plot():
-    from unigbsa.pbsa import plots
+    from unigbsa.gbsa import plots
     parser = argparse.ArgumentParser(description='Analysis and plot results for MMPBSA.')
     parser.add_argument('-i', help='MMPBSA result directory. Which contains FINAL_RESULTS_MMPBSA.dat, FINAL_DECOMP_MMPBSA.dat, EO.csv or DEO.csv file.', required=True)
     parser.add_argument('-o', help='Figure output directory. default: analysis', default='analysis')

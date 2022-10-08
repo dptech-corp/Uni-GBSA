@@ -3,7 +3,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from unigbsa.pbsa import io
+from unigbsa.gbsa import io
 
 fontdir = Path(__file__).absolute().parent.parent.joinpath('data/Calibri')
 fontfiles = mpl.font_manager.findSystemFonts(str(fontdir))

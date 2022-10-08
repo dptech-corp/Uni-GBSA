@@ -6,9 +6,9 @@ import json
 import shutil
 import parmed as pmd
 
-from hmtpbsa.settings import GMXEXE,TEMPLATE_TOP
-from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain, fix_insertions
+from unigbsa.settings import GMXEXE,TEMPLATE_TOP
+from unigbsa.simulation.mdrun import GMXEngine
+from unigbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain, fix_insertions
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
     """
