@@ -1,4 +1,3 @@
-from concurrent.futures import process
 import os
 import shutil
 from unigbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS

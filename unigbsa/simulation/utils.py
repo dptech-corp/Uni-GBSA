@@ -17,7 +17,38 @@ def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
         filename = os.path.split(inputfile)[-1][:-4]
         outfile = filename + '.' + outtype
     # convert to mol2
-    cmd = 'obabel -i %s %s -o %s -O %s'%(filetype, inputfile, outtype, outfile)
+    cmd = 'obabel -i %s %s -o %s -O %s >/dev/null 2>&1 '%(filetype, inputfile, outtype, outfile)
+    RC = os.system(cmd)
+    if RC!=0:
+        raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
+    return os.path.abspath(outfile)
+
+def assign_partial_charge(inputfile, filetype, charge_method='gasteiger', outfile=None):
+    '''
+
+eem    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Bultinck B3LYP/6-31G*/MPA
+eem2015ba    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf B3LYP/6-311G/AIM
+eem2015bm    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf B3LYP/6-311G/MPA
+eem2015bn    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf B3LYP/6-311G/NPA
+eem2015ha    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf HF/6-311G/AIM
+eem2015hm    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf HF/6-311G/MPA
+eem2015hn    Assign Electronegativity Equilization Method (EEM) atomic partial charges. Cheminf HF/6-311G/NPA
+eqeq    Assign EQEq (charge equilibration) partial charges.
+fromfile    Assign charges from file containing {'atom-name', charge} pairs
+gasteiger    Assign Gasteiger-Marsili sigma partial charges
+mmff94       Assign MMFF94 partial charges
+none    Clear all partial charges
+qeq    Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991)
+qtpie    Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007)
+    '''
+    charge_methods = ['eem', 'eem2015ba', 'eem2015bm', 'eem2015bn', 'eem2015ha', 'eem2015hm', 'eem2015hn', 'gasteiger', 'mmff94', 'qeq', 'qtpie']
+    if outfile is None:
+        filename = os.path.split(inputfile)[-1][:-4]
+        outfile = filename + '.mol2'
+    if charge_method not in charge_methods:
+        raise Exception('ERROR: charge method %s is not one of the %s '%(charge_method, ','.join(charge_methods)))
+    # convert to mol2
+    cmd = 'obabel -i %s %s -o %s -O %s -xl --partialcharge %s >/dev/null 2>&1 '%(filetype, inputfile, 'mol2', outfile, charge_method)
     RC = os.system(cmd)
     if RC!=0:
         raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
