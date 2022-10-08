@@ -1,7 +1,7 @@
 import os
 import shutil
 import unittest
-from hmtpbsa.pipeline import md_pipeline, minim_pipeline, traj_pipeline, load_configue_file
+from unigbsa.pipeline import md_pipeline, minim_pipeline, traj_pipeline, load_configue_file
 
 import warnings
 
@@ -49,7 +49,7 @@ class TestPipline(unittest.TestCase):
         cwd = os.getcwd()
         os.chdir(workdir)
         paras = load_configue_file()
-        traj_pipeline(pdbfile, pdbfile, topfile, indexfile, pbsaParas=paras['PBSA'])
+        traj_pipeline(pdbfile, pdbfile, topfile, indexfile, pbsaParas=paras['GBSA'])
         EF = os.path.exists('Energy.csv')
         self.assertTrue(EF)
         os.chdir(cwd)

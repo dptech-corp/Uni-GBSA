@@ -2,7 +2,7 @@ from email.policy import default
 import os
 import shutil
 import configparser
-from hmtpbsa.settings import logging, GMXEXE, DEFAULT_CONFIGURE_FILE
+from unigbsa.settings import logging, GMXEXE, DEFAULT_CONFIGURE_FILE
 
 def obtain_id_from_index(indexFile):
     """
@@ -196,7 +196,7 @@ def load_configue_file(conf=None):
                 'maxsol': config.getint('simulation', 'maxsol', fallback=0),
                 'ligandCharge': config.get('simulation', 'ligandCharge', fallback='bcc'),
             },
-            'PBSA':  {k:v for k,v in config.items('PBSA')}
+            'GBSA':  {k:v for k,v in config.items('GBSA')}
         }
 
     return paras

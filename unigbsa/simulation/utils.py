@@ -1,5 +1,5 @@
 import os
-from hmtpbsa.settings import GMXEXE
+from unigbsa.settings import GMXEXE
 def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
     """
     Convert a file of type filetype to mol2 format

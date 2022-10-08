@@ -5,50 +5,83 @@ Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(P
 
 ## Install
 ### Install by conda
+To run uni-GBSA, you need install some third-party software( acpype, gmx_MMPBSA, lickit, etc.).
 ```Bash
-conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 openmpi mpi4py gromacs
-conda activate amber21
-pip install gmx_MMPBSA lickit
-git clone https://github.com/dptech-corp/Uni-GBSA.git
-cd Uni-GBSA
-python setup.py install
+conda create -n gbsa -c conda-forge acpype openmpi mpi4py gromacs
+conda activate gbsa
+pip install unigbsa gmx_MMPBSA>=1.5.6 lickit
 ```
 
 ### Install by dokcer images
-You can build a dokcer image by this file or just pull from the docker hub `docker pull dockerymh/hmtpbsa:gmx_openmpi`
+You can build a dokcer image by this file or just pull from the docker hub `docker pull dockerymh/unigbsa`
 ```Plaintext
 FROM continuumio/miniconda3
 
 # 1. create a enverioment
 SHELL ["/bin/bash", "-c"]
-RUN conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 gromacs openmpi mpi4py \
-&&  echo 'conda activate amber21' >> ~/.bashrc \
+RUN conda create -n gbsa -c conda-forge acpype openmpi mpi4py gromacs \
+&&  echo 'conda activate gbsa' >> ~/.bashrc \
 &&  rm -rf /opt/conda/pkgs/* 
 
-
-# 2. install requirments
+# 2. install unigbsa
 RUN source ~/.bashrc \ 
-&&  pip install gmx_MMPBSA lickit \
+&&  pip install unigbsa gmx_MMPBSA>=1.5.6 lickit \
 &&  rm -rf ~/.cache/*
 
-# 3. install hmtpbsa
-RUN git clone https://github.com/dptech-corp/Hermite-MMPBSA.git \
-&&  cd Hermite-MMPBSA \
-&&  python setup.py install \
-&&  cd ../ \
-&&  rm -rf Hermite-MMPBSA
 ```
 
 ## Usage & Examples
-This packge contains many command lines: `hmtpbsa-pipeline`, `hmtpbsa-traj`, `hmtpbsa-pbc`, `hmtpbsa-buildtop`, `hmtpbsa-buildsys`, `hmtpbsa-md`.
 
-### hmtpbsa-pipeline
+### Usage
+```bash
+$ unigbsa-pipeline -h
+usage: unigbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE] [-nt THREAD]
+                        [--decomp] [--verbose] [-v]
+
+GBSA Calculation. Version: 0.0.9_dev
+
+options:
+  -h, --help            show this help message and exit
+  -i RECEPTOR           Input protein file with pdb format.
+  -l LIGAND [LIGAND ...]
+                        Ligand files to calculate binding energy.
+  -c CONFIG             Configue file, default: /opt/miniconda3/envs/test/lib/python3.10/site-packages/unigbsa-0.0.9.dev0-py3.10.egg/unigbsa/data/default.ini
+  -d LIGDIR             Floder contains many ligand files. file format: .mol or .sdf
+  -f PBSAFILE           gmx_MMPBSA input file. default=None
+  -o OUTFILE            Output file.
+  -nt THREAD            Set number of thread to run this program.
+  --decomp              Decompose the free energy. default:False
+  --verbose             Keep all the files.
+  -v, --version         show program's version number and exit
+```
+
+### Example
+```bash
+$ unigbsa-pipeline -i example/1ceb/1ceb_protein.pdb -l example/1ceb/1ceb_ligand.sdf -o BindingEnergy.csv
+
+10/08/2022 13:46:09 PM - INFO - Build protein topology.
+10/08/2022 13:46:10 PM - INFO - Build ligand topology: 1ceb_ligand
+1 molecule converted
+10/08/2022 13:46:13 PM - INFO - Running energy minimization: 1ceb_ligand
+10/08/2022 13:46:14 PM - INFO - Run the MMPB(GB)SA.
+10/08/2022 13:46:18 PM - INFO - Clean the results.
+================================================================================
+Results: Energy.csv Dec.csv
+Frames    mode    detal_G(kcal/mole)
+     1      gb              -20.4421
+
+```
+
+## Other Tools
+This packge contains many command lines: `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
+
+### unigbsa-pipeline
 >A very simple pipeline to calculate the PBSA/GBSA value. You just need input a protein file and some ligands files. It will obtain the PBSA/GBSA value for this ligands.
 
 
-* If you want do minimization or MD simulation for the complex. Just use the ``hmtpbsa-pipeline``
+* If you want do minimization or MD simulation for the complex. Just use the ``unigbsa-pipeline``
 ```Bash
-usage: hmtpbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE] [-nt THREAD] [--decomp] [--verbose]
+usage: unigbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE] [-nt THREAD] [--decomp] [--verbose]
 
 GBSA Calculation.
 
@@ -104,7 +137,7 @@ ligandCharge = bcc
 
 
 ; parameters for PBSA/GBSA calculation, support all the gmx_MMPBSA parameters
-[PBSA]
+[GBSA]
 ; calculation name
 sys_name = GBSA
 
@@ -117,12 +150,12 @@ indi = 4.0
 exdi = 80.0
 ```
 
-### hmtpbsa-traj
+### unigbsa-traj
 >Calculate the PBSA/GBSA value for a md trajectory. Most important, you need to prepare a gromacs `index.ndx` file which contains two groups named `RECEPTOR` and `LIGAND`.
 
 ````
-hmtpbsa-traj -h
-usage: hmtpbsa-traj [-h] -i INP -p TOP -ndx NDX [-m {gb,pb,pb+gb,gb+pb}] [-t TRAJ] [-indi INDI] [-dec] [-D]
+unigbsa-traj -h
+usage: unigbsa-traj [-h] -i INP -p TOP -ndx NDX [-m {gb,pb,pb+gb,gb+pb}] [-t TRAJ] [-indi INDI] [-dec] [-D]
 
 Free energy calcaulated by PBSA method.
 
@@ -139,11 +172,11 @@ optional arguments:
   -D                    DEBUG model, keep all the files.
 ````
 
-### hmtpbsa-buildtop
+### unigbsa-buildtop
 >Build topology for protein or ligand by gromacs.
 ```Bash
-hmtpbsa-buildtop -h
-usage: hmtpbsa-buildtop [-h] [-p PROTEIN] [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-o OUTDIR] [-c] [-verbose]
+unigbsa-buildtop -h
+usage: unigbsa-buildtop [-h] [-p PROTEIN] [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-o OUTDIR] [-c] [-verbose]
 
 Build topology file for input file.
 
@@ -157,11 +190,11 @@ optional arguments:
   -c                Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True
   -verbose          Keep the directory or not.
 ```
-### hmtpbsa-buildsys
+### unigbsa-buildsys
 >Build simulation system for protein or ligand.
 ```bash
-hmtpbsa-buildsys -h
-usage: hmtpbsa-buildsys [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR]
+unigbsa-buildsys -h
+usage: unigbsa-buildsys [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR]
 
 Build MD simulation for input file.
 
@@ -178,11 +211,11 @@ optional arguments:
   -o OUTDIR         A output directory.
 ```
 
-### hmtpbsa-md
+### unigbsa-md
 >Run a MD simulation for input protein or ligand.
 ```Bash
-hmtpbsa-md -h
-usage: hmtpbsa-md [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR] [-nstep NSTEP] [-nframe NFRAME] [-verbose]
+unigbsa-md -h
+usage: unigbsa-md [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR] [-nstep NSTEP] [-nframe NFRAME] [-verbose]
 
 Run MD simulation for input file.
 
@@ -202,11 +235,11 @@ optional arguments:
   -verbose          Keep all the files in the simulation.
 ```
 
-### hmtpbsa-pbc
+### unigbsa-pbc
 >Process PBC condition for the gromacs trajectory.
 ```Bash
-hmtpbsa-pbc -h
-usage: hmtpbsa-pbc [-h] -s TPR -f XTC [-o OUT] [-n NDX]
+unigbsa-pbc -h
+usage: unigbsa-pbc [-h] -s TPR -f XTC [-o OUT] [-n NDX]
 
 Auto process PBC for gromacs MD trajector.
 
@@ -219,26 +252,26 @@ optional arguments:
 ```
 
 
-## Example
+### More Examples
 
-* Give a protein and some ligand files. Obtain the PBSA with ``hmtpbsa-pipeline``
+* Give a protein and some ligand files. Obtain the PBSA with ``unigbsa-pipeline``
 ````Bash
-hmtpbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
+unigbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ````
 
-* Calculate PBSA value with ``hmtpbsa-traj``
+* Calculate PBSA value with ``unigbsa-traj``
 ```Bash
-hmtpbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
+unigbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
 ```
 
-* Build topology for protein or ligand by gromacs. ``hmtpbsa-buildtop``
+* Build topology for protein or ligand by gromacs. ``unigbsa-buildtop``
 ```bash
-hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
-hmtpbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
+unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
+unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
 ```
 
-* Build simulation system with ``hmtpbsa-buildsys``
+* Build simulation system with ``unigbsa-buildsys``
 
-* Run MD simulation with ``hmtpbsa-md``
+* Run MD simulation with ``unigbsa-md``
 
-* Process PBC condition with ``hmtpbsa-pbc``
+* Process PBC condition with ``unigbsa-pbc``

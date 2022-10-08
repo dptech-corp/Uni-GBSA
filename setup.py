@@ -17,30 +17,31 @@ def get_version(rel_path):
 
 
 install_requires = [
-#        'mdanalysis>=2.0.0',
-#        'pdb2pqr',
+        'acpype',
+        'gmx_MMPBSA>=1.5.6',
+        'lickit'
 ]
 setup(
-    name = 'hmtpbsa',
-    version=get_version("hmtpbsa/version.py"),
+    name = 'unigbsa',
+    version=get_version("unigbsa/version.py"),
     author='dptech.net',
     author_email='hermite@dptech.net',
-    description=('MMBPSA tools for calculate energy.'),
-    url='https://github.com/dptech-corp/Hermite-MMPBSA',
+    description=('MMPB(GB)SA tools for calculate energy.'),
+    url='https://github.com/dptech-corp/Uni-GBSA',
     license=None,
-    keywords='MMPBSA',
- #   install_requires=install_requires,
+    keywords='MMPBSA MMGBSA',
+    install_requires=install_requires,
     packages=find_packages(),
     zip_safe = False,
     #packages=packages,
     entry_points={'console_scripts': [
-         'hmtpbsa-pipeline = hmtpbsa.pipeline:main',
-         'hmtpbsa-traj = hmtpbsa.CLI:traj_pipeline',
-         'hmtpbsa-pbc = hmtpbsa.CLI:PBC_main',
-         'hmtpbsa-buildtop = hmtpbsa.CLI:topol_builder',
-         'hmtpbsa-buildsys = hmtpbsa.CLI:simulation_builder',
-         'hmtpbsa-md = hmtpbsa.CLI:simulation_run',
-         'hmtpbsa-plots = hmtpbsa.CLI:mmpbsa_plot'
+         'unigbsa-pipeline = unigbsa.pipeline:main',
+         'unigbsa-traj = unigbsa.CLI:traj_pipeline',
+         'unigbsa-pbc = unigbsa.CLI:PBC_main',
+         'unigbsa-buildtop = unigbsa.CLI:topol_builder',
+         'unigbsa-buildsys = unigbsa.CLI:simulation_builder',
+         'unigbsa-md = unigbsa.CLI:simulation_run',
+         'unigbsa-plots = unigbsa.CLI:mmpbsa_plot'
      ]},
     include_package_data=True
 )

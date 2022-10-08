@@ -2,13 +2,13 @@ FROM continuumio/miniconda3
 
 # 1. create a enverioment
 SHELL ["/bin/bash", "-c"]
-RUN conda create -n amber21 -c conda-forge ambertools=21 acpype=2021.02 gromacs openmpi mpi4py \
-&&  echo 'conda activate amber21' >> ~/.bashrc \
+RUN conda create -n gbsa -c conda-forge acpype gromacs openmpi mpi4py \
+&&  echo 'conda activate gbsa' >> ~/.bashrc \
 &&  rm -rf /opt/conda/pkgs/* 
 
 
-# 2. install requirments
+# 2. install Uni-GBSA
 RUN source ~/.bashrc \ 
-&&  pip install gmx_MMPBSA \
+&&  pip install unigbsa gmx_MMPBSA>=1.5.6 lickit \
 &&  rm -rf ~/.cache/*
 

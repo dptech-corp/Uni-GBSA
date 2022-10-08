@@ -1,9 +1,9 @@
 from concurrent.futures import process
 import os
 import shutil
-from hmtpbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
-from hmtpbsa.utils import generate_index_file, process_pbc
-from hmtpbsa.simulation.utils import write_position_restrain
+from unigbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
+from unigbsa.utils import generate_index_file, process_pbc
+from unigbsa.simulation.utils import write_position_restrain
 
 class BaseObject(object):
     pass

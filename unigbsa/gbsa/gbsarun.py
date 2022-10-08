@@ -2,11 +2,11 @@ import os
 import shutil
 import pandas as pd
 
-from hmtpbsa.settings import gmx_MMPBSA, MPI, logging
-from hmtpbsa.utils import obtain_id_from_index
-from hmtpbsa.pbsa.utils import obtain_num_of_frame
-from hmtpbsa.pbsa.parameters import generate_input_file
-from hmtpbsa.pbsa.io import parse_GMXMMPBSA_RESULTS
+from unigbsa.settings import gmx_MMPBSA, MPI, logging
+from unigbsa.utils import obtain_id_from_index
+from unigbsa.gbsa.utils import obtain_num_of_frame
+from unigbsa.gbsa.parameters import generate_input_file
+from unigbsa.gbsa.io import parse_GMXMMPBSA_RESULTS
 
 
 '''
@@ -14,8 +14,8 @@ from hmtpbsa.pbsa.io import parse_GMXMMPBSA_RESULTS
 2. one complex file and a trajectory file.
 '''
 
-class PBSA(object):
-    def __init__(self, workdir='MMPBSA') -> None:
+class GBSA(object):
+    def __init__(self, workdir='UNIGBSA') -> None:
         self.workdir = os.path.abspath(workdir)
         self.cwd = os.getcwd()
         self.verbose = 0

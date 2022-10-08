@@ -12,7 +12,7 @@
         "maxsol": 0,
         "ligandCharge": "bcc"
     },
-    "PBSA": {
+    "GBSA": {
         "sys_name": "GBSA",
         "modes": "gb",
         "igb": "2",
