@@ -4,12 +4,12 @@ import argparse
 import traceback
 import pandas as pd
 
-from hmtpbsa.version import __version__
-from hmtpbsa.pbsa.pbsarun import PBSA
-from hmtpbsa.utils import generate_index_file, load_configue_file
-from hmtpbsa.simulation.mdrun import GMXEngine
-from hmtpbsa.simulation.topology import build_topol, build_protein
-from hmtpbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE, set_OMP_NUM_THREADS
+from unigbsa.version import __version__
+from unigbsa.gbsa.gbsarun import GBSA
+from unigbsa.utils import generate_index_file, load_configue_file
+from unigbsa.simulation.mdrun import GMXEngine
+from unigbsa.simulation.topology import build_topol, build_protein
+from unigbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE, set_OMP_NUM_THREADS
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL', 'status']
 def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1, verbose=False):
@@ -35,7 +35,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     RC = os.system(cmd)
     if RC!=0:
        raise Exception('Error convert %s to %s'%(complexfile, reresfile))
-    pbsa = PBSA()
+    pbsa = GBSA()
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
@@ -54,7 +54,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
       paras: a dictionary of parameters for the pipeline.
     """
     simParas = paras['simulation']
-    pbsaParas = paras['PBSA']
+    pbsaParas = paras['GBSA']
 
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
@@ -64,7 +64,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
     df = None
     ligandnames = []
     status = []
-    pbsaParas = paras['PBSA']
+    pbsaParas = paras['GBSA']
     d = pd.DataFrame({'Frames': 1, 'mode':pbsaParas['modes'], 'complex':0.0,'receptor':0.0,'ligand':0.0,'Internal':0.0,'Van der Waals':0.0,'Electrostatic':0,'Polar Solvation':0.0,'Non-Polar Solvation':0.0,'Gas':0.0,'Solvation':0.0,'TOTAL':0.0}, index=[1])
     for ligandfile in ligandfiles:
         statu = 'S'
@@ -121,7 +121,7 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
       outfile: the output file name. Defaults to BindingEnergy.csv
     """
     simParas = paras['simulation']
-    pbsaParas = paras['PBSA']
+    pbsaParas = paras['GBSA']
 
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
@@ -207,7 +207,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
       outfile: the output file name. Defaults to BindingEnergy.csv
     """
     simParas = paras['simulation']
-    pbsaParas = paras['PBSA']
+    pbsaParas = paras['GBSA']
 
     receptorfile = os.path.abspath(receptorfile)
     logging.info('Build protein topology.')
@@ -295,7 +295,7 @@ def main(args=None):
     set_OMP_NUM_THREADS(nt)
     paras = load_configue_file(conf)
     if decomposition:
-        paras['PBSA']['modes'] += ',decomposition'
+        paras['GBSA']['modes'] += ',decomposition'
 
     if paras['simulation']['mode'] == 'em':
         minim_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)

@@ -1,4 +1,4 @@
-from hmtpbsa.settings import PBSA_VERSION, PBSA_PARAMETER_FILE
+from unigbsa.settings import PBSA_VERSION, PBSA_PARAMETER_FILE
 '''
 see the https://valdes-tresanco-ms.github.io/gmx_MMPBSA/input_file/#the-input-file
 '''

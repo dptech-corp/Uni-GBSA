@@ -1,6 +1,5 @@
 import os
-import pandas as pd
-from hmtpbsa.settings import GMXEXE
+from unigbsa.settings import GMXEXE
 def set_amber_home(proc):
     """
     Find the directory containing the executable for a command
