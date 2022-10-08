@@ -1,4 +1,8 @@
-# Uni-GBSA
+Uni-GBSA: An Automatic Workflow to Perform MM/GB(PB)SA Calculations for Virtual Screening
+==============================================================================
+
+[[ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/63345399f764e656800664e7)]
+
 ## Backgroud
 
 Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(PB)SA), which balance accuracy and efficiency, is a good choice for evaluating binding free energy in virtual screening. Uni-GBSA, an automatic workflow to perform MM/GB(PB)SA calculations from force field building, structure optimization to free energy calculation. 
@@ -275,3 +279,9 @@ unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.m
 * Run MD simulation with ``unigbsa-md``
 
 * Process PBC condition with ``unigbsa-pbc``
+
+
+## Citation
+```plaintext
+Yang M, Wang D, Zheng H. Uni-GBSA: An Automatic Workflow to Perform MM/GB(PB)SA Calculations for Virtual Screening. ChemRxiv. Cambridge: Cambridge Open Engage; 2022; This content is a preprint and has not been peer-reviewed.
+```
