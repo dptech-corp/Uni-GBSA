@@ -8,7 +8,8 @@ import parmed as pmd
 
 from unigbsa.settings import GMXEXE,TEMPLATE_TOP
 from unigbsa.simulation.mdrun import GMXEngine
-from unigbsa.simulation.utils import convert_format, guess_filetype, write_position_restrain, fix_insertions
+from unigbsa.simulation.utils import convert_format, guess_filetype, fix_insertions
+from unigbsa.simulation.utils import assign_partial_charge, write_position_restrain
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
     """
@@ -30,7 +31,12 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     ligandName = os.path.split(ligandfile)[-1][:-4]+'.TOP'
     filetype = guess_filetype(ligandfile)
     acceptFileTypes = ('pdb', 'mol2', 'mol')
-    if filetype != 'mol':
+    
+    acpype_charge_methods = ['gas', 'bcc']
+    if charge_method not in acpype_charge_methods:
+        ligandfile = assign_partial_charge(ligandfile, filetype, charge_method=charge_method)
+        charge_method = 'user'
+    elif filetype != 'mol':
         ligandfile = convert_format(ligandfile, filetype)
     if not os.path.exists(ligandName): 
         os.mkdir(ligandName)
