@@ -69,3 +69,30 @@ def obtain_MMPBSA_version():
     return version
 
 PBSA_VERSION = 1.5  #obtain_MMPBSA_version()
+
+class PathManager(object):
+    def __init__(self, path) -> None:
+        self.path = path
+        self.cwd = os.getcwd()
+    
+    def __enter__(self) -> str:
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        os.chdir(self.path)
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        os.chdir(self.cwd)
+
+    def abspath(self, files, parent=False):
+        '''
+        Obtain absolute file path by parent directory
+        '''
+        if parent:
+            cwd = self.cwd
+        else:
+            cwd = '.'
+        if isinstance(files, str):
+            return os.path.abspath(os.path.join(cwd, files))
+        else:
+            return [os.path.abspath(os.path.join(cwd, f)) for f in files]
