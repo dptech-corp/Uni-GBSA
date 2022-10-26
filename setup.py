@@ -41,7 +41,8 @@ setup(
          'unigbsa-buildtop = unigbsa.CLI:topol_builder',
          'unigbsa-buildsys = unigbsa.CLI:simulation_builder',
          'unigbsa-md = unigbsa.CLI:simulation_run',
-         'unigbsa-plots = unigbsa.CLI:mmpbsa_plot'
+         'unigbsa-plots = unigbsa.CLI:mmpbsa_plot',
+         'unigbsa-scan = unigbsa.scanparas.scan:main'
      ]},
     include_package_data=True
 )
