@@ -10,6 +10,7 @@ from unigbsa.settings import GMXEXE,TEMPLATE_TOP
 from unigbsa.simulation.mdrun import GMXEngine
 from unigbsa.simulation.utils import convert_format, guess_filetype, fix_insertions
 from unigbsa.simulation.utils import assign_partial_charge, write_position_restrain
+from unigbsa.simulation.utils import obtain_net_charge
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
     """
@@ -40,6 +41,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         ligandfile = convert_format(ligandfile, filetype)
     if not os.path.exists(ligandName): 
         os.mkdir(ligandName)
+    charge = obtain_net_charge(ligandfile)
     cwd = os.getcwd()
     os.chdir(ligandName)
     paras = {
@@ -47,9 +49,10 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         'ligandfile': ligandfile,
         'forcefield': forcefield,
         'method': charge_method,
-        'molname': molname
+        'molname': molname,
+        'net_charge': charge
     }
-    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -f >acpype.log 2>&1 ".format(**paras)
+    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -f >acpype.log 2>&1 ".format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)

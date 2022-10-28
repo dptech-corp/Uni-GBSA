@@ -291,3 +291,21 @@ def prepare_ligand(molfile, outfile=None):
     Chem.MolToMolFile(mol_out, outfile)
     return outfile
 
+
+def obtain_net_charge(molfile):
+    import uuid
+    ftype = guess_filetype(molfile)
+    mol2file = str(uuid.uuid4()) + '.mol2'
+    cmd = f'obabel -i {ftype} {molfile} -omol2 -O {mol2file} --partialcharge gasteiger >/dev/null 2>&1 '
+    RC = os.system(cmd)
+    if RC!=0:
+        logging.warning('Failed to obtain mol charge, use guess')
+        return None
+    charge = 0
+    with open(mol2file) as fr:
+        for line in fr:
+            if line.startswith('charge'):
+                charge += int(line.split()[1].strip())
+    return charge
+# def obtain_net_charge(molfile):
+
