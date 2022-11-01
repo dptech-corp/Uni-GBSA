@@ -55,7 +55,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         'net_charge': charge,
         'sqm_key': "grms_tol=0.005,qm_theory='AM1',scfconv=1.d-8,ndiis_attempts=700,maxcyc=0",
     }
-    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -k {sqm_key} -f >acpype.log 2>&1 ".format(**paras)
+    cmd = '''export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '''.format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
