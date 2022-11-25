@@ -23,7 +23,7 @@ class TestPipline(unittest.TestCase):
 
 #################### version 0.0.2 ########################
 
-    def pipeline_simulation(self, pdbfile, ligandfiles, configfile=None, nt=4):
+    def pipeline_simulation(self, pdbfile, ligandfiles, configfile=None, nt=1):
         pdbfile, ligandfile, workdir = self.base(pdbfile, ligandfiles[0])
         cwd = os.getcwd()
         os.chdir(workdir)
@@ -43,7 +43,7 @@ class TestPipline(unittest.TestCase):
     def pipeline_md(self, pdbfile, ligandfiles):
         self.pipeline_simulation(pdbfile, ligandfiles, TEST_MD_CONFIG)
 
-    def test_traj(self, nt=4):
+    def test_traj(self, nt=1):
         pdbfile, topfile, indexfile = '../example/3f/complex.pdb', os.path.abspath('../example/3f/complex.top'), os.path.abspath('../example/3f/index.ndx')
         pdbfile, ligandfile, workdir = self.base(pdbfile, pdbfile)
         cwd = os.getcwd()

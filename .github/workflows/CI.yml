@@ -3,7 +3,7 @@ on: [push]
 
 jobs:
   MMPBSA_unittest:
-    runs-on: self-hosted
+    runs-on: "ubuntu-latest"
     container: dockerymh/hmtpbsa:gmx_openmpi_patch
     
     steps:
