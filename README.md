@@ -77,7 +77,34 @@ Frames    mode    detal_G(kcal/mole)
 ```
 
 ## Other Tools
-This packge contains many command lines: `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
+This packge contains many command lines: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
+
+### unigbsa-scan
+>Scan best GB/PBSA parameters with experient data.
+```Bash
+usage: unigbsa-scan [-h] [-i RECEPTOR] [-pd PROTDIR] [-l LIGAND [LIGAND ...]] [-ld LIGDIR] -e E -c PARASFILE [-o OUTDIR]
+                    [-nt THREAD] [--verbose]
+
+GBSA Calculation.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i RECEPTOR           Input protein file with pdb format.
+  -pd PROTDIR           Floder contains many protein files. file format: .pdb
+  -l LIGAND [LIGAND ...]
+                        Ligand files to calculate binding energy.
+  -ld LIGDIR            Floder contains many ligand files. file format: .mol or .sdf
+  -e E                  Experiment data file.
+  -c PARASFILE          Parameters to scan
+  -o OUTDIR             Output directory.
+  -nt THREAD            Set number of thread to run this program.
+  --verbose             Keep all the files.
+```
+>Example
+```Bash
+unigbsa-scan -i example/scan/protein.pdb -ld example/scan/ -e example/scan/ligands.csv -c example/scan/scan.json -o scan-demo -nt 4
+```
+
 
 ### unigbsa-pipeline
 >A very simple pipeline to calculate the PBSA/GBSA value. You just need input a protein file and some ligands files. It will obtain the PBSA/GBSA value for this ligands.

@@ -1,0 +1,24 @@
+{
+    "simulation": {
+        "mode": ["em", "md-100"],
+        "boxtype": "triclinic",
+        "boxsize": 0.9,
+        "conc": 0.15,
+        "nsteps": 500000,
+        "nframe": 100,
+        "eqsteps": 50000,
+        "proteinforcefield": "amber03",
+        "ligandforcefield": "gaff",
+        "maxsol": 0,
+        "ligandCharge": "bcc"
+    },
+    "GBSA": {
+        "sys_name": "GBSA",
+        "modes": ["gb-5","pb-1"],
+        "igb": "2",
+        "indi": "4.0",
+        "exdi": "80.0",
+        "nonpolarsurfConst": "0.0",
+        "surften": "0.0072"
+    }
+}
