@@ -12,7 +12,7 @@ from unigbsa.simulation.utils import convert_format, guess_filetype, fix_inserti
 from unigbsa.simulation.utils import assign_partial_charge, write_position_restrain
 from unigbsa.simulation.utils import obtain_net_charge
 
-def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, nt=1):
+def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, sqm_key=None, nt=1):
     """
     Build a ligand topology and coordinate file from a ligand file using acpype
     
@@ -44,15 +44,18 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     charge = obtain_net_charge(ligandfile)
     cwd = os.getcwd()
     os.chdir(ligandName)
+    if sqm_key is None:
+         sqm_key = "grms_tol=0.0005,qm_theory='AM1',scfconv=1.d-10,ndiis_attempts=700,"
     paras = {
         'thread': nt,
         'ligandfile': ligandfile,
         'forcefield': forcefield,
         'method': charge_method,
         'molname': molname,
-        'net_charge': charge
+        'net_charge': charge,
+        'sqm_key': "grms_tol=0.005,qm_theory='AM1',scfconv=1.d-8,ndiis_attempts=700,maxcyc=0",
     }
-    cmd = "export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -f >acpype.log 2>&1 ".format(**paras)
+    cmd = '''export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '''.format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
