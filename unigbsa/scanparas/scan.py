@@ -282,26 +282,32 @@ def gbsa_calculation_MPI(paras, outdir, nt=4):
     df.to_csv(outcsv, index=False)
     return outparas
 
-def scan_parameters_v2(receptor, ligands, ligdir, expdatfile, parasfile, outdir, nt=4) -> None:
+def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=4) -> None:
     '''
     '''
     if ligands is None:
         ligands = []
+    if receptors is None:
+        receptors = []
+    if protdir:
+        for fileName in os.listdir(protdir):
+            if fileName.endswith('.pdb'):
+                receptors.append(os.path.join(protdir, fileName))
     if ligdir:
         for fileName in os.listdir(ligdir):
-            if fileName.endswith(('mol','sdf')):
+            if fileName.endswith(('mol', 'sdf')):
                 ligands.append(os.path.join(ligdir, fileName))
-    if len(ligands)==0:
-        raise Exception('No ligands file found.')
+    if len(ligands) == 0 or len(receptors) == 0:
+        raise Exception('No ligands or receptors file found.')
     with PathManager(outdir) as pm:
         expdatfile = pm.abspath(expdatfile, parent=True)
         parasfile = pm.abspath(parasfile, parent=True)
-        ligands = pm.abspath([ l for l in ligands ], parent=True)
-        receptor = pm.abspath(receptor, parent=True)
+        ligands = pm.abspath(sorted([lig for lig in ligands]), parent=True)
+        receptors = pm.abspath(sorted([prot for prot in receptors]), parent=True)
         R2max = ('', 0)
         parasdicts, simulationparas = load_scan_paras(parasfile)
         for name, parasdic in simulationparas.items():
-            topfileparas = build_topology_MPI(receptor, ligands, parasdic[list(parasdic.keys())[0]], name, nt=nt)
+            topfileparas = build_topology_MPI(receptors, ligands, parasdic[list(parasdic.keys())[0]], name, nt=nt)
             for k, v in parasdic.items():
                 outdir = os.path.join(name, k)
                 topfileparas['simulation'] = v['simulation']
@@ -377,9 +383,10 @@ class ParameterScan(object):
 
 def main():
     parser = argparse.ArgumentParser(description='GBSA Calculation.')
-    parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', required=True)
+    parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', default=None)
+    parser.add_argument('-pd', dest='protdir', help='Floder contains many protein files. file format: .pdb', default=None)
     parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
-    parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
+    parser.add_argument('-ld', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-e', help='Experiment data file.', required=True)
     parser.add_argument('-c', dest='parasfile', help='Parameters to scan', required=True)
     parser.add_argument('-o', dest='outdir', help='Output directory.', default='pbsa.scan')
@@ -387,7 +394,7 @@ def main():
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
-    receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.thread
+    receptor, protdir, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.protdir, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.thread
     # scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt)
-    scan_parameters_v2(receptor, ligands, ligdir, expdatfile, parasfile, outdir, nt=4)
+    scan_parameters_v2(receptor, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=4)
     
