@@ -16,6 +16,12 @@ def get_version(rel_path):
         raise RuntimeError("Unable to find version string.")
 
 
+def get_readme(rel_path):
+    readme = ''
+    for line in read(rel_path).splitlines():
+        readme += line
+    return readme
+
 install_requires = [
         'acpype',
         'gmx_MMPBSA>=1.5.6',
@@ -27,6 +33,8 @@ setup(
     author='dptech.net',
     author_email='hermite@dptech.net',
     description=('MMPB(GB)SA tools for calculate energy.'),
+    long_description_content_type="text/markdown",
+    long_description=get_readme('README.md'),
     url='https://github.com/dptech-corp/Uni-GBSA',
     license=None,
     keywords='MMPBSA MMGBSA',
