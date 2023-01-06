@@ -296,7 +296,7 @@ def obtain_net_charge(molfile):
     import uuid
     ftype = guess_filetype(molfile)
     mol2file = str(uuid.uuid4()) + '.mol2'
-    cmd = f'obabel -i {ftype} {molfile} -omol2 -O {mol2file} --partialcharge gasteiger >/dev/null 2>&1 '
+    cmd = f'obabel -i {ftype} {molfile} -omol2 -O {mol2file}  >/dev/null 2>&1 '
     RC = os.system(cmd)
     if RC != 0:
         print('Failed to obtain mol charge, use guess')
@@ -308,4 +308,3 @@ def obtain_net_charge(molfile):
             if len(llist) >= 8:
                 charge += float(llist[-1])
     return int(round(charge))
-
