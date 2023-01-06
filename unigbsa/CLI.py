@@ -266,10 +266,8 @@ def traj_pipeline(args=None):
     pbsa = GBSA()
     pbsa.set_paras(complexfile=complexFile, trajectoryfile=trajFile, topolfile=topolFile, indexfile=indexFile, mmpbsafile=mmpbsafile, pbsaParas=pbsaParas, nt=nt)
     pbsa.run(verbose=debug)
-    detal_G = pbsa.extract_result()
-    print("mode    detal_G(kcal/mole)    Std. Dev.")
-    for k, v in detal_G.items():
-        print('%4s    %18.4f    %9.4f'%(k, v[0], v[1]))
+    delta_G = pbsa.extract_result()
+    print(delta_G)
 
 def mmpbsa_plot():
     from unigbsa.gbsa import plots

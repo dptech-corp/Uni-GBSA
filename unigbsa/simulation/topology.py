@@ -55,7 +55,10 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         'net_charge': charge,
         'sqm_key': "grms_tol=0.005,qm_theory='AM1',scfconv=1.d-8,ndiis_attempts=700,maxcyc=0",
     }
-    cmd = '''export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '''.format(**paras)
+    if charge is None:
+        cmd = '''export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -k "{sqm_key}" -f >acpype.log 2>&1 '''.format(**paras)
+    else:
+        cmd = '''export OMP_NUM_THREADS={thread};acpype -i {ligandfile} -b {molname} -a {forcefield} -c {method} -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '''.format(**paras)
     RC = os.system(cmd)
     if RC != 0:
         print(cmd)
@@ -75,6 +78,67 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     if not verbose:
         shutil.rmtree(ligandName)
     return moltop, molgro
+
+
+def pdb2amber(pdbfile, outfile=None):
+    structure = pmd.load_structure(pdbfile)
+    atomlist = []
+    for c, residue in enumerate(structure.residues, start=1):
+        # change atoms name from GROMACS to AMBER
+        for atom in residue.atoms:
+            if atom.name == 'OC1':
+                atom.name = 'O'
+            elif atom.name == 'OC2':
+                atom.name = 'OXT'
+                residue.ter = True  # parmed terminal
+        # change residues name according to AMBER
+        if residue.name == 'ILE':
+            for atom in residue.atoms:
+                if atom.name == 'CD':
+                    atom.name = 'CD1'
+                    break
+        elif residue.name == 'LYS':
+            atoms = [atom.name for atom in residue.atoms]
+            if 'HZ3' not in atoms:
+                residue.name = 'LYN'
+        elif residue.name == 'ASP':
+            atoms = [atom.name for atom in residue.atoms]
+            if 'HD2' in atoms:
+                residue.name = 'ASH'
+        elif residue.name == 'GLU':
+            atoms = [atom.name for atom in residue.atoms]
+            if 'HE2' in atoms:
+                residue.name = 'GLH'
+        elif residue.name in ['HIS', 'HIE', 'HID', 'HIP']:
+            atoms = [atom.name for atom in residue.atoms if atom.atomic_number == 1]
+            if 'HD1' in atoms and 'HE2' in atoms:
+                residue.name = 'HIP'
+            elif 'HD1' in atoms:
+                residue.name = 'HID'
+            elif 'HE2' in atoms:
+                residue.name = 'HIE'
+        for atom in residue.atoms:
+            if atom.element > 2:
+                atomlist.append(atom)
+    structure.atoms = pmd.structure.AtomList(atomlist)
+    if outfile is None:
+        outfile = pdbfile
+    structure.write_pdb(outfile)
+
+
+def build_protein_tleap(pdbfile, forcefield='', outtop=None, outcoor=None):
+    struc = pmd.load_structure(pdbfile)
+    leaprc = '''
+    source leaprc.protein.ff19SB
+    source leaprc.gaff
+    loadOff atomic_ions.lib
+    loadamberparams frcmod.ions234lm_126_tip3p
+    set default PBRadii mbondi2
+    REC = loadpdb %s
+    REC_OUT = combine { REC }
+    saveamberparm REC_OUT REC.prmtop REC.inpcrd
+    ''' % pdbfile
+
 
 def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=None):
     """
