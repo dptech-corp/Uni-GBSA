@@ -294,8 +294,20 @@ def main(args=None):
     mmpbsafile = os.path.abspath(args.pbsafile) if args.pbsafile else args.pbsafile
     set_OMP_NUM_THREADS(nt)
     paras = load_configue_file(conf)
+    gbsa_modes = paras['GBSA']['modes']
     if decomposition:
         paras['GBSA']['modes'] += ',decomposition'
+    if '-' in gbsa_modes:
+        tmplist = gbsa_modes.split(',')[0].split('-')
+        gbtype = tmplist[0]
+        gbnum = tmplist[1]
+        if gbtype.upper() == 'GB':
+            paras['GBSA']['igb'] = gbnum
+        elif gbtype.upper() == 'PB':
+            paras['GBSA']['ipb'] = gbnum
+        if 'decomposition' in gbsa_modes:
+            gbtype += ',decomposition'
+        paras['GBSA']['modes'] = gbtype
 
     if paras['simulation']['mode'] == 'em':
         minim_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
