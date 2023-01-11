@@ -14,6 +14,7 @@ from unigbsa.settings import logging, PathManager, GMXEXE
 from unigbsa.simulation.topology import build_topol, build_protein
 from unigbsa.pipeline import traj_pipeline
 from unigbsa.utils import load_configue_file, generate_index_file
+from unigbsa.utils import logging
 
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL']
@@ -25,7 +26,9 @@ def reres_gro(infile, outfile):
     return outfile
 
 def thread_split(njob, nt):
-    return max([round(nt/njob), 1])
+    thread = max([round(nt/njob), 1])
+    nt = njob if njob < nt else nt
+    return thread, nt
 
 def load_scan_paras(jsonfile: str, scantype='fixed') -> dict:
     parasdict = {}
@@ -61,6 +64,8 @@ def load_scan_paras(jsonfile: str, scantype='fixed') -> dict:
         for kj, vi in vi.items():
             if not isinstance(vi, list):
                 defaultparas[ki][kj] = vi
+            elif isinstance(vi, list) and len(vi) == 1:
+                defaultparas[ki][kj] = vi[0]
             elif (ki=="simulation" and kj in ['mode', 'ligandCharge', 'ligandforcefield', 'proteinforcefield']) or \
                  (ki == "GBSA" and kj in ['modes', 'indi', 'exdi']):
                 key = f'{ki}_{kj}'
@@ -101,8 +106,14 @@ def load_scan_paras(jsonfile: str, scantype='fixed') -> dict:
             parasdict['__'.join(name)] = dic
     else:
         raise Exception(f'scantype {scantype} not one of the: {scantypes}')
+
+    parasdict_unique = {}
+    for k, v in parasdict.items():
+        if v not in parasdict_unique.values():
+            parasdict_unique[k] = v
+
     simulationparas = {}
-    for name, v in parasdict.items():
+    for name, v in parasdict_unique.items():
         simparas = v['simulation']
         forcefieldkey = f"{simparas['proteinforcefield']}_{simparas['ligandforcefield']}_{simparas['ligandCharge']}"
         if simparas['mode'] == 'md':
@@ -114,7 +125,7 @@ def load_scan_paras(jsonfile: str, scantype='fixed') -> dict:
         elif simulationkey not in simulationparas[forcefieldkey]:
             simulationparas[forcefieldkey][simulationkey] = v
 
-    return parasdict, simulationparas
+    return parasdict_unique, simulationparas
 
 def calc_R2(expfile, gbsa):
     exp = pd.read_csv(expfile)
@@ -176,7 +187,7 @@ def build_topology_walker(arg):
     return ligandName, outfiles
 
 def build_topology_MPI(receptorfiles, ligandfiles, paras, outdir, nt=4):
-    thread = thread_split(len(ligandfiles), nt)
+    thread, nworker = thread_split(len(ligandfiles), nt)
     with PathManager(outdir) as pm:
         if isinstance(receptorfiles, str):
             receptor = build_protein(pm.abspath(receptorfiles, parent=True), forcefield=paras['simulation']['proteinforcefield'])
@@ -185,7 +196,7 @@ def build_topology_MPI(receptorfiles, ligandfiles, paras, outdir, nt=4):
             receptors = pm.abspath(receptorfiles, parent=True)
         ligandfiles = pm.abspath(ligandfiles, parent=True)
         args = [ (receptor, ligandfile, paras, thread) for receptor, ligandfile in zip(receptors, ligandfiles) ]
-        with ProcessPoolExecutor(max_workers=nt) as pool:
+        with ProcessPoolExecutor(max_workers=nworker) as pool:
             outdict = { out[0]:out[1] for out in list(pool.map(build_topology_walker, args)) if out is not None }
     outparas = copy(paras)
     outparas['files'] = outdict
@@ -234,9 +245,9 @@ def structural_optimization_walker(arg):
 
 def structural_optimization_MPI(paras, outdir=None, nt=4):
     ligandNames = paras['files'].keys()
-    thread = thread_split(len(ligandNames), nt)
+    thread, nworker = thread_split(len(ligandNames), nt)
     args = [ (paras, ligandName, outdir, thread) for ligandName in ligandNames ]
-    with ProcessPoolExecutor(max_workers=nt) as pool:
+    with ProcessPoolExecutor(max_workers=nworker) as pool:
         outfiles = { out[0]:out[1] for out in list(pool.map(structural_optimization_walker, args)) if out is not None }
     outparas = copy(paras)
     outparas['files'] = outfiles
@@ -257,9 +268,9 @@ def gbsa_calculation_walker(arg):
 
 def gbsa_calculation_MPI(paras, outdir, nt=4):
     ligandNames = paras['files'].keys()
-    thread = thread_split(len(ligandNames), nt)
+    thread, nworker = thread_split(len(ligandNames), nt)
     args = [ (paras, ligandName, outdir, thread) for ligandName in ligandNames ]
-    with ProcessPoolExecutor(max_workers=nt) as pool:
+    with ProcessPoolExecutor(max_workers=nworker) as pool:
         results = [ out for out in list(pool.map(gbsa_calculation_walker, args)) if out is not None ]
     df = None
     for result in results:
@@ -304,9 +315,10 @@ def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfil
         parasfile = pm.abspath(parasfile, parent=True)
         ligands = pm.abspath(sorted([lig for lig in ligands]), parent=True)
         receptors = pm.abspath(sorted([prot for prot in receptors]), parent=True)
-        R2max = ('', 0)
+        logging.info('load scan paras.')
         parasdicts, simulationparas = load_scan_paras(parasfile)
         for name, parasdic in simulationparas.items():
+            logging.info('Building protein and ligand topology.')
             topfileparas = build_topology_MPI(receptors, ligands, parasdic[list(parasdic.keys())[0]], name, nt=nt)
             for k, v in parasdic.items():
                 outdir = os.path.join(name, k)
@@ -323,22 +335,38 @@ def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfil
                 simulationkey = f"{simparas['mode']}"
             paras = simulationparas[forcefieldkey][simulationkey]
             paras['GBSA'] = v['GBSA']
+            modes = paras['GBSA']['modes']
+            if '-' in modes:
+                gmode, gtype = modes.split('-')
+                paras['GBSA']['modes'] = gmode
+                if gmode.upper() == 'GB':
+                    paras['GBSA']['igb'] = gtype
+                elif gmode.upper() == 'PB':
+                    paras['GBSA']['ipb'] = gtype
             outdir = os.path.join(forcefieldkey, f"{simulationkey}/{k}")
+            logging.info(f'GBSA calculation: {forcefieldkey} {simulationkey} {k}')
             outparas = gbsa_calculation_MPI(paras, outdir=outdir, nt=nt)
             if outparas is None:
                 R, R2 = 0, -10
             else:
                 R, R2 = calc_R2(expdatfile, outparas['results'])
-            outset.append((k, R, R2))
-            
+            logging.info(f'GBSA results: {R} {R2}')
+            outparas['results']['R'] = R
+            outparas['results']['R2'] = R2
+            outset.append((k, R, R2, pm.abspath(outdir+'/paras.json')))
+        logging.info('Write output: paras_performance.csv')
+        R2max = ('', 0, 0, '')
         with open('paras_performance.csv', 'w') as fw:
-            fw.write('name,R,R2\n')
+            fw.write('name,R,R2,parasjson\n')
             for outline in outset:
-                fw.write('%s,%.6f,%.6f\n'%(outline[0], outline[1], outline[2]))
-                if outline[2]>R2max[1]:
-                    R2max = (outline[0], outline[2])
+                fw.write('%s,%.6f,%.6f,%s\n'%(outline[0], outline[1], outline[2], outline[3]))
+                if outline[2]>R2max[2]:
+                    R2max = (outline[0], outline[1], outline[2], outline[3])
+    print('='*80)
     print('The best para name is: %s'%R2max[0])
-    print('The best para R2 is: %.4f'%R2max[1])
+    print('The best para R2 is: %.4f'%R2max[2])
+    print('The best para file is: %s'%R2max[3])
+    print('='*80)
 
 def scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt=4) -> None:
     '''
@@ -348,7 +376,7 @@ def scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, o
         ligands = []
     if ligdir:
         for fileName in os.listdir(ligdir):
-            if fileName.endswith(('mol','sdf')):
+            if fileName.endswith(('mol', 'sdf')):
                 ligands.append(os.path.join(ligdir, fileName))
     if len(ligands)==0:
         raise Exception('No ligands file found.')
@@ -396,5 +424,5 @@ def main():
     args = parser.parse_args()
     receptor, protdir, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.protdir, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.thread
     # scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt)
-    scan_parameters_v2(receptor, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=4)
+    scan_parameters_v2(receptor, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=nt)
     
