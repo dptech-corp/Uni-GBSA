@@ -107,7 +107,7 @@ unigbsa-scan -i example/scan/protein.pdb -ld example/scan/ -e example/scan/ligan
 
 
 ### unigbsa-pipeline
->A simple, automatic pipeline to perform MM/GB(PB)SA calculations. You only need input a protein structure file (in the PDB format) and ligand structure files (in the MOL or SDF format). This function will perform an energy minimization then calculate the PBSA/GBSA values for the each input ligand.
+>A simple, automatic pipeline to perform MM/GB(PB)SA calculations. You only need to provide a protein file (in the PDB format) and ligand files (in the MOL or SDF format). This function will perform an energy minimization then calculate the PBSA/GBSA values for the each input ligand.
 
 
 * If you want perform energy minimization or MD simulation for the complex automatically, use the ``unigbsa-pipeline`` function.
@@ -182,7 +182,7 @@ exdi = 80.0
 ```
 
 ### unigbsa-traj
->Calculate the PBSA/GBSA value from a MD trajectory. Note: you need to prepare a gromacs `index.ndx` file which contains two groups named `RECEPTOR` and `LIGAND`.
+>Perform a PBSA/GBSA calculation of a complex from a MD trajectory. Note: you need to prepare a gromacs `index.ndx` file which contains two groups named `RECEPTOR` and `LIGAND`.
 
 ````
 unigbsa-traj -h
