@@ -9,7 +9,7 @@ Calculating the binding free energy of a ligand to a protein receptor is a cruci
 
 ## Install
 ### Install by conda
-To run uni-GBSA, you need install several third-party softwares including acpype, gmx_MMPBSA, lickit, etc.
+To run uni-GBSA, you need to install several third-party softwares including acpype, gmx_MMPBSA, lickit, etc.
 ```Bash
 conda create -n gbsa -c conda-forge acpype openmpi mpi4py gromacs
 conda activate gbsa
