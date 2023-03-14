@@ -5,11 +5,11 @@ Uni-GBSA: An Automatic Workflow to Perform MM/GB(PB)SA Calculations for Virtual 
 
 ## Backgroud
 
-Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(PB)SA), which balance accuracy and efficiency, is a good choice for evaluating binding free energy in virtual screening. Uni-GBSA, an automatic workflow to perform MM/GB(PB)SA calculations from force field building, structure optimization to free energy calculation. 
+Calculating the binding free energy of a ligand to a protein receptor is a crucial goal in drug discovery. Molecular mechanics/Generalized-Born (Poisson–Boltzmann) surface area (MM/GB(PB)SA), which balances accuracy and efficiency, is one of the most widely used methods for evaluating ligand binding free energies in virtual screening. Uni-GBSA is an automatic workflow to perform MM/GB(PB)SA calculations. It includes several functions including but not limited to topology preparation, structure optimization, binding free energy calculation, and parameter scanning for MM/GB(PB)SA calculations. It also has a batch mode that allows the evaluation of thousands of molecules against one protein target simultaneously, enabling its application in virtual screening. 
 
 ## Install
 ### Install by conda
-To run uni-GBSA, you need install some third-party software( acpype, gmx_MMPBSA, lickit, etc.).
+To run uni-GBSA, you need install several third-party softwares including acpype, gmx_MMPBSA, lickit, etc.
 ```Bash
 conda create -n gbsa -c conda-forge acpype openmpi mpi4py gromacs
 conda activate gbsa
@@ -17,7 +17,7 @@ pip install unigbsa gmx_MMPBSA>=1.5.6 lickit
 ```
 
 ### Install by dokcer images
-You can build a dokcer image by this file or just pull from the docker hub `docker pull dockerymh/unigbsa`
+You can also build a dokcer image using this file or pull from the docker hub `docker pull dockerymh/unigbsa`
 ```Plaintext
 FROM continuumio/miniconda3
 
@@ -34,7 +34,7 @@ RUN source ~/.bashrc \
 
 ```
 
-## Usage & Examples
+## Usage & Example
 
 ### Usage
 ```bash
@@ -80,7 +80,7 @@ Frames    mode    detal_G(kcal/mole)
 This packge contains many command lines: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
 
 ### unigbsa-scan
->Scan best GB/PBSA parameters with experient data.
+>An automatic parameter optimization prior to production MM/GB(PB)SA calculations.
 ```Bash
 usage: unigbsa-scan [-h] [-i RECEPTOR] [-pd PROTDIR] [-l LIGAND [LIGAND ...]] [-ld LIGDIR] -e E -c PARASFILE [-o OUTDIR]
                     [-nt THREAD] [--verbose]
@@ -107,10 +107,10 @@ unigbsa-scan -i example/scan/protein.pdb -ld example/scan/ -e example/scan/ligan
 
 
 ### unigbsa-pipeline
->A very simple pipeline to calculate the PBSA/GBSA value. You just need input a protein file and some ligands files. It will obtain the PBSA/GBSA value for this ligands.
+>A simple, automatic pipeline to perform MM/GB(PB)SA calculations. You only need input a protein structure file (in the PDB format) and ligand structure files (in the MOL or SDF format). This function will perform an energy minimization then calculate the PBSA/GBSA values for the each input ligand.
 
 
-* If you want do minimization or MD simulation for the complex. Just use the ``unigbsa-pipeline``
+* If you want perform energy minimization or MD simulation for the complex automatically, use the ``unigbsa-pipeline`` function.
 ```Bash
 usage: unigbsa-pipeline [-h] -i RECEPTOR [-l LIGAND [LIGAND ...]] [-c CONFIG] [-d LIGDIR] [-f PBSAFILE] [-o OUTFILE] [-nt THREAD] [--decomp] [--verbose]
 
@@ -130,7 +130,7 @@ optional arguments:
   --verbose             Keep all the files.
 ```
 
-You can change the parameters for calculations by settig a configue file(`default.ini`). 
+You can change the parameters for the MM/GB(PB)SA calculations by providing a configue file(`default.ini`). 
 ```
 ; parameters for simulation
 [simulation]
@@ -182,7 +182,7 @@ exdi = 80.0
 ```
 
 ### unigbsa-traj
->Calculate the PBSA/GBSA value for a md trajectory. Most important, you need to prepare a gromacs `index.ndx` file which contains two groups named `RECEPTOR` and `LIGAND`.
+>Calculate the PBSA/GBSA value from a MD trajectory. Note: you need to prepare a gromacs `index.ndx` file which contains two groups named `RECEPTOR` and `LIGAND`.
 
 ````
 unigbsa-traj -h
@@ -204,7 +204,7 @@ optional arguments:
 ````
 
 ### unigbsa-buildtop
->Build topology for protein or ligand by gromacs.
+>Topology preparation for a protein receptor and ligand(s) using gromacs.
 ```Bash
 unigbsa-buildtop -h
 usage: unigbsa-buildtop [-h] [-p PROTEIN] [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-o OUTDIR] [-c] [-verbose]
@@ -222,7 +222,7 @@ optional arguments:
   -verbose          Keep the directory or not.
 ```
 ### unigbsa-buildsys
->Build simulation system for protein or ligand.
+>Build a simulation box for a protein-ligand complex.
 ```bash
 unigbsa-buildsys -h
 usage: unigbsa-buildsys [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR]
@@ -243,7 +243,7 @@ optional arguments:
 ```
 
 ### unigbsa-md
->Run a MD simulation for input protein or ligand.
+>Run a MD simulation of a protein-ligand complex.
 ```Bash
 unigbsa-md -h
 usage: unigbsa-md [-h] -p PROTEIN [-l LIGAND] [-pf PROTFORCE] [-lf {gaff,gaff2}] [-bt BOXTYPE] [-box BOX BOX BOX] [-d D] [-conc CONC] [-o OUTDIR] [-nstep NSTEP] [-nframe NFRAME] [-verbose]
@@ -267,7 +267,7 @@ optional arguments:
 ```
 
 ### unigbsa-pbc
->Process PBC condition for the gromacs trajectory.
+>Process PBC condition for a MD trajectory.
 ```Bash
 unigbsa-pbc -h
 usage: unigbsa-pbc [-h] -s TPR -f XTC [-o OUT] [-n NDX]
@@ -285,27 +285,27 @@ optional arguments:
 
 ### More Examples
 
-* Give a protein and some ligand files. Obtain the PBSA with ``unigbsa-pipeline``
+* Perform a MM/GB(PB)SA calculation on a ligand file with a protein receptor with ``unigbsa-pipeline``
 ````Bash
 unigbsa-pipeline -i ./example/2fvy/protein.pdb -l ./example/2fvy/BGC.mol2
 ````
 
-* Calculate PBSA value with ``unigbsa-traj``
+* Perform a MM/GB(PB)SA calculation of a complex from a MD trajectory with ``unigbsa-traj``
 ```Bash
 unigbsa-traj -i example/3f/complex.pdb -p example/3f/complex.top -ndx example/3f/index.ndx -m pb gb -t example/3f/complex.pdb
 ```
 
-* Build topology for protein or ligand by gromacs. ``unigbsa-buildtop``
+* Build topology for a protein receptor and a ligand using gromacs. ``unigbsa-buildtop``
 ```bash
 unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -o topol  # build gromacs topology for a single protein
 unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.mol2 -lf gaff -o 2fvy_topol -c # build gromacs topology for protein and ligand complex
 ```
 
-* Build simulation system with ``unigbsa-buildsys``
+* Build a simulation system with ``unigbsa-buildsys``
 
-* Run MD simulation with ``unigbsa-md``
+* Run a MD simulation with ``unigbsa-md``
 
-* Process PBC condition with ``unigbsa-pbc``
+* Process the PBC condition of a MD trjectorywith ``unigbsa-pbc``
 
 
 ## Citation
