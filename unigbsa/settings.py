@@ -47,7 +47,7 @@ if 'AMBERHOME' not in os.environ:
 if 'OMP_NUM_THREADS' in os.environ:
     OMP_NUM_THREADS = os.environ['OMP_NUM_THREADS']
 else:
-    OMP_NUM_THREADS = 4
+    OMP_NUM_THREADS = 1
 
 def set_OMP_NUM_THREADS(nt):
     os.environ['OMP_NUM_THREADS'] = str(nt)
