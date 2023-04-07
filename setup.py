@@ -25,7 +25,8 @@ def get_readme(rel_path):
 install_requires = [
         'acpype',
         'gmx_MMPBSA>=1.5.6',
-        'lickit'
+        'lickit',
+        'tqdm'
 ]
 setup(
     name = 'unigbsa',
