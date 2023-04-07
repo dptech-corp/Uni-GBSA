@@ -14,7 +14,6 @@ from unigbsa.settings import logging, PathManager, GMXEXE
 from unigbsa.simulation.topology import build_topol, build_protein
 from unigbsa.pipeline import traj_pipeline
 from unigbsa.utils import load_configue_file, generate_index_file
-from unigbsa.utils import logging
 
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL']
@@ -355,13 +354,10 @@ def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfil
             outparas['results']['R2'] = R2
             outset.append((k, R, R2, pm.abspath(outdir+'/paras.json')))
         logging.info('Write output: paras_performance.csv')
-        R2max = ('', 0, 0, '')
-        with open('paras_performance.csv', 'w') as fw:
-            fw.write('name,R,R2,parasjson\n')
-            for outline in outset:
-                fw.write('%s,%.6f,%.6f,%s\n'%(outline[0], outline[1], outline[2], outline[3]))
-                if outline[2]>R2max[2]:
-                    R2max = (outline[0], outline[1], outline[2], outline[3])
+        df = pd.DataFrame(outset, columns=['name', 'R', 'R2', 'parasjson'])
+        df = df.sort_values(by='R2', ascending=False).reset_index(drop=True)
+        R2max = list(df.loc[0, :])
+        df.to_csv('paras_performance.csv', index=False)
     print('='*80)
     print('The best para name is: %s'%R2max[0])
     print('The best para R2 is: %.4f'%R2max[2])
