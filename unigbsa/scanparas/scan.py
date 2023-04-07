@@ -14,7 +14,6 @@ from unigbsa.settings import logging, PathManager, GMXEXE
 from unigbsa.simulation.topology import build_topol, build_protein
 from unigbsa.pipeline import traj_pipeline
 from unigbsa.utils import load_configue_file, generate_index_file
-from unigbsa.utils import logging
 
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL']
