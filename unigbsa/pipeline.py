@@ -3,6 +3,7 @@ import shutil
 import argparse
 import traceback
 import pandas as pd
+import multiprocessing
 
 from unigbsa.version import __version__
 from unigbsa.gbsa.gbsarun import GBSA
@@ -271,7 +272,7 @@ def main(args=None):
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
-    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
+    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=multiprocessing.cpu_count())
     parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
