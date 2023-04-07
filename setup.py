@@ -26,6 +26,7 @@ install_requires = [
         'acpype',
         'gmx_MMPBSA>=1.5.6',
         'lickit',
+        'tqdm'
 ]
 setup(
     name = 'unigbsa',
