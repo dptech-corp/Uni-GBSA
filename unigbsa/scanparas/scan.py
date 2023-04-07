@@ -5,18 +5,22 @@ import shutil
 import argparse
 import itertools
 import pandas as pd
+import multiprocessing
 
 from copy import deepcopy as copy
 from concurrent.futures import ProcessPoolExecutor
 
 from unigbsa.simulation.mdrun import GMXEngine
-from unigbsa.settings import logging, PathManager, GMXEXE
+from unigbsa.settings import PathManager, GMXEXE
 from unigbsa.simulation.topology import build_topol, build_protein
 from unigbsa.pipeline import traj_pipeline
 from unigbsa.utils import load_configue_file, generate_index_file
+from unigbsa.utils import logging
 
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL']
+
+
 def reres_gro(infile, outfile):
     cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1'%(GMXEXE, infile, outfile)
     RC = os.system(cmd)
@@ -414,11 +418,13 @@ def main():
     parser.add_argument('-e', help='Experiment data file.', required=True)
     parser.add_argument('-c', dest='parasfile', help='Parameters to scan', required=True)
     parser.add_argument('-o', dest='outdir', help='Output directory.', default='pbsa.scan')
-    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
+    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=multiprocessing.cpu_count())
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
     receptor, protdir, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.protdir, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.thread
     # scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt)
+    if isinstance(receptor, str):
+        receptor = [receptor] * len(ligands)
     scan_parameters_v2(receptor, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=nt)
     
