@@ -313,6 +313,8 @@ def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfil
                 ligands.append(os.path.join(ligdir, fileName))
     if len(ligands) == 0 or len(receptors) == 0:
         raise Exception('No ligands or receptors file found.')
+    if len(receptors) == 1 and len(ligands) != 1:
+        receptors = receptors * len(ligands)
     with PathManager(outdir) as pm:
         expdatfile = pm.abspath(expdatfile, parent=True)
         parasfile = pm.abspath(parasfile, parent=True)

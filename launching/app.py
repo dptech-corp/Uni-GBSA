@@ -61,15 +61,45 @@ class AlgorithmMode(str, Enum):
     pb2 = 'PB-2'
 
 
+expfiledes = """
+Input experiment file.  
+    example:
+[ligands.csv](https://labs.dp.tech/download/artifacts/applications/uni-gbsa/artifacts/ligands.csv)
+"""
+protfiledes = """
+Input protein file with pdb format.  
+    example:
+[protein.pdb](https://labs.dp.tech/download/artifacts/applications/uni-gbsa/artifacts/protein.pdb)
+"""
+ligfiledes ="""
+Ligand files to perform the calculation.  
+    example:
+[1a.sdf](https://labs.dp.tech/download/artifacts/applications/uni-gbsa/artifacts/1a.sdf)
+"""
+ligfiledes2 = """
+Ligand files to perform the calculation.  
+    example:
+[ligands.zip](https://labs.dp.tech/download/artifacts/applications/uni-gbsa/artifacts/ligands.zip)
+"""
+
+
 class SCANUploadFilesModel(BaseModel):
     experiment_info: InputFilePath = \
-        Field(ftypes=['csv'], description='Input experiment file.')
-    input_protein: InputFilePath = \
+        Field(ftypes=['csv'],
+              description=expfiledes,
+              description_type="markdown",
+              max_file_size='2MB')
+    input_protein: List[InputFilePath] = \
         Field(ftypes=['pdb'],
-              description="Input protein file with pdb format.")
+              description=protfiledes,
+              description_type="markdown",
+              max_file_size='2MB')
     input_ligands: List[InputFilePath] = \
         Field(ftypes=['sdf'],
-              description='Ligand files to perform the calculation.')
+              description=ligfiledes2,
+              description_type="markdown",
+              max_file_size='1MB',
+              max_file_count=100)
 
 
 class SCANArgs(BaseModel):
@@ -113,15 +143,21 @@ class SCANModel(SCANUploadFilesModel,
 class GBSAUploadFilesModel(BaseModel):
     input_protein: InputFilePath = \
         Field(ftypes=['pdb'],
-              description="Input protein file with pdb format.")
+              description=protfiledes,
+              description_type="markdown",
+              max_file_size='2MB')
+
     input_ligands: List[InputFilePath] = \
         Field(ftypes=['sdf'],
-              description='Ligand files to perform the calculation.')
+              description=ligfiledes,
+              description_type="markdown",
+              max_file_count=100,
+              max_file_size='1MB')
 
 
 class AlgorithmOptions(BaseModel):
     protein_forcefield = Field(default=AlgorithmProteinForcefield.amber03,
-                               description='Protein forcefiled.')
+                               description='Protein forcefield.')
     ligand_forcefield = Field(default=AlgorithmLigandForcefield.gaff,
                               description='Ligand forcefield.')
     ligand_charge = Field(default=AlgorithmLigandCharge.bcc,
@@ -203,11 +239,14 @@ def gbsa_runner(opts: GBSAModel) -> int:
         with open(csvoutfile) as fr:
             lines = fr.readlines()
         with open(csvoutfile, 'w') as fw:
-            for line in lines:
+            for i, line in enumerate(lines):
                 llist = line.strip().split(',')
-                newlist = [llist[0]]
-                for li in llist[2:-1]:
-                    newlist.append(str(round(float(li), 4)))
+                if i == 0:
+                    newlist = [llist[0]] + llist[2:-1]
+                else:
+                    newlist = [llist[0], llist[2]]
+                    for li in llist[3:-1]:
+                        newlist.append(str(round(float(li), 4)))
                 newline = ','.join(newlist) + '\n'
                 fw.write(newline)
         table_section = ReportSection(
@@ -258,14 +297,14 @@ def scan_runner(opts: GBSAModel) -> int:
             }
         }
 
-        input_protein = opts.input_protein.get_path()
+        input_protein = os.path.abspath(opts.input_protein[0].get_path())
         input_dir = os.path.dirname(input_protein)
         configfile = Path(os.path.join(input_dir, 'config.json'))
         with open(configfile,  'w') as fw:
             json.dump(default, fw, indent='  ')
         cmd = sh.Command('unigbsa-scan')
         args = [
-            '-i', input_protein,
+            '-pd', input_dir,
             '-l', opts.input_ligands,
             '-e', opts.experiment_info.get_path(),
             '-c', configfile,
@@ -281,6 +320,8 @@ def scan_runner(opts: GBSAModel) -> int:
                 llist = line.strip().split(',')
                 if i == 1:
                     best_parafile = llist[-1]
+                if i == 0:
+                    newlist = llist[:-1]
                 else:
                     newlist = [llist[0]]
                     for li in llist[1:-1]:
