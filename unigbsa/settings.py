@@ -42,7 +42,7 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 gmx_MMPBSA='gmx_MMPBSA'
 if 'AMBERHOME' not in os.environ:
     #os.environ['AMBERHOME'] = set_amber_home(gmx_MMPBSA)
-    raise Exception("Not found variable AMBERHOME")
+    print("Not found variable AMBERHOME")
 
 if 'OMP_NUM_THREADS' in os.environ:
     OMP_NUM_THREADS = os.environ['OMP_NUM_THREADS']
