@@ -176,12 +176,16 @@ def load_configue_file(conf=None):
                 "maxsol": 0,
                 "ligandCharge": "bcc"
             }
-        for k,v in default.items():
+        for k, v in default.items():
             if k not in paras['simulation']:
                 paras['simulation'][k] = v
+        if 'PBSA' in paras:
+            paras['GBSA'] = paras['PBSA']
     elif fileformat == 'ini':
         config = configparser.ConfigParser()
         config.read(conf)
+        if 'PBSA' in config:
+            config['GBSA'] = config['PBSA']
         paras = {
                 'simulation':{
                 'mode': config.get('simulation', 'mode', fallback='em'),
@@ -198,5 +202,4 @@ def load_configue_file(conf=None):
             },
             'GBSA':  {k:v for k,v in config.items('GBSA')}
         }
-
     return paras
