@@ -292,7 +292,7 @@ def prepare_ligand(molfile, outfile=None):
     return outfile
 
 
-def obtain_net_charge(molfile):
+def obtain_net_charge_command(molfile):
     import uuid
     ftype = guess_filetype(molfile)
     mol2file = str(uuid.uuid4()) + '.mol2'
@@ -308,3 +308,30 @@ def obtain_net_charge(molfile):
             if len(llist) >= 8:
                 charge += float(llist[-1])
     return int(round(charge))
+
+
+def obtain_net_charge_rdkit(sdfile):
+    from rdkit import Chem
+    # Read the MOL or SDF file
+    mol = Chem.MolFromMolFile(sdfile)
+
+    # Calculate the net charge of the molecule
+    net_charge = Chem.GetFormalCharge(mol)
+
+    return net_charge
+
+
+def obtain_net_charge(sdfile):
+    from openbabel import openbabel
+    # Read the MOL or SDF file
+    mol = openbabel.OBMol()
+    with open(sdfile, 'r') as file:
+        format = 'sdf' if 'sdf' in sdfile else 'mol'
+        file.seek(0)  # Reset the file pointer
+        obConversion = openbabel.OBConversion()
+        obConversion.SetInFormat(format)
+        obConversion.ReadString(mol, file.read())
+
+    # Calculate the net charge of the molecule
+    net_charge = mol.GetTotalCharge()
+    return net_charge
