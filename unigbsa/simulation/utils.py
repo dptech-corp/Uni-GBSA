@@ -23,6 +23,30 @@ def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
         raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
     return os.path.abspath(outfile)
 
+def assign_partial_charge_espaloma(inputfile, filetype, outfile=None):
+    from rdkit import Chem
+    from espaloma_charge import charge
+    if filetype != 'mol2':
+        convert_format(inputfile, filetype, outfile=outfile, outtype='mol2')
+    mol = Chem.MolFromMolFile(inputfile, removeHs=False)
+    net_charge = Chem.GetFormalCharge(mol)
+    charges = charge(mol, total_charge=net_charge)
+    with open(outfile) as fr:
+        lines = fr.readlines()
+    if outfile is None:
+        outfile = outfile
+    with open(outfile, 'w') as fw:
+        ai = 0
+        for line in lines:
+            llist = line.split()
+            if "GASTEIGER" in line:
+                line = "espaloma\n"
+            if len(llist)>8:
+                line = line[:-8] + "%7.4f\n"%charges[ai]
+                ai += 1
+            fw.write(line)
+    return charges
+
 def assign_partial_charge(inputfile, filetype, charge_method='gasteiger', outfile=None):
     '''
 
@@ -41,17 +65,20 @@ none    Clear all partial charges
 qeq    Assign QEq (charge equilibration) partial charges (Rappe and Goddard, 1991)
 qtpie    Assign QTPIE (charge transfer, polarization and equilibration) partial charges (Chen and Martinez, 2007)
     '''
-    charge_methods = ['eem', 'eem2015ba', 'eem2015bm', 'eem2015bn', 'eem2015ha', 'eem2015hm', 'eem2015hn', 'gasteiger', 'mmff94', 'qeq', 'qtpie']
+    charge_methods = ['espaloma', 'eem', 'eem2015ba', 'eem2015bm', 'eem2015bn', 'eem2015ha', 'eem2015hm', 'eem2015hn', 'gasteiger', 'mmff94', 'qeq', 'qtpie']
     if outfile is None:
         filename = os.path.split(inputfile)[-1][:-4]
         outfile = filename + '.mol2'
-    if charge_method not in charge_methods:
+    if charge_method == 'espaloma':
+        _ = assign_partial_charge_espaloma(inputfile, filetype, outfile=outfile)
+    elif charge_method not in charge_methods:
         raise Exception('ERROR: charge method %s is not one of the %s '%(charge_method, ','.join(charge_methods)))
-    # convert to mol2
-    cmd = 'obabel -i %s %s -o %s -O %s -xl --partialcharge %s >/dev/null 2>&1 '%(filetype, inputfile, 'mol2', outfile, charge_method)
-    RC = os.system(cmd)
-    if RC!=0:
-        raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
+    else:
+        # convert to mol2
+        cmd = 'obabel -i %s %s -o %s -O %s -xl --partialcharge %s >/dev/null 2>&1 '%(filetype, inputfile, 'mol2', outfile, charge_method)
+        RC = os.system(cmd)
+        if RC!=0:
+            raise Exception('ERROR: failed convert %s to %s'%(inputfile, outfile))
     return os.path.abspath(outfile)
 
 def guess_filetype(inputfile):
@@ -326,7 +353,7 @@ def obtain_net_charge(sdfile):
     # Read the MOL or SDF file
     mol = openbabel.OBMol()
     with open(sdfile, 'r') as file:
-        format = 'sdf' if 'sdf' in sdfile else 'mol'
+        format = sdfile[-3:]
         file.seek(0)  # Reset the file pointer
         obConversion = openbabel.OBConversion()
         obConversion.SetInFormat(format)
