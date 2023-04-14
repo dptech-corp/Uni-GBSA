@@ -17,7 +17,7 @@ from multiprocessing import Pool
 
 
 KEY = ['ligandName', 'Frames', 'mode', 'complex','receptor','ligand','Internal','Van der Waals','Electrostatic','Polar Solvation','Non-Polar Solvation','Gas','Solvation','TOTAL', 'status']
-def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1, verbose=False):
+def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, mmpbsafile=None, nt=1, verbose=False, input_pdb = None):
     """
     A pipeline for calculate GBSA/PBSA for trajectory
     
@@ -41,6 +41,8 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
     if RC!=0:
        raise Exception('Error convert %s to %s'%(complexfile, reresfile))
     pbsa = GBSA()
+    pbsa.complex = os.path.abspath(reresfile)
+    pbsa.input_pdb = os.path.abspath(input_pdb)
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
@@ -95,7 +97,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
         
         if statu == 'S':
             try:
-                dl = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+                dl = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt, input_pdb=receptorfile)
             except:
                 if len(ligandfiles)==1:
                     traceback.print_exc()
@@ -115,7 +117,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
 
 
 def single(arg):
-    receptor, ligandfile, simParas, ligandfiles, mmpbsafile, nt, pbsaParas, verbose = arg
+    receptor, ligandfile, simParas, ligandfiles, mmpbsafile, nt, pbsaParas, verbose, receptorfile = arg
     d1 = pd.DataFrame({'Frames': 1, 'mode':pbsaParas['modes'], 'complex':0.0,'receptor':0.0,'ligand':0.0,'Internal':0.0,'Van der Waals':0.0,'Electrostatic':0,'Polar Solvation':0.0,'Non-Polar Solvation':0.0,'Gas':0.0,'Solvation':0.0,'TOTAL':0.0}, index=[1])
     cwd = os.getcwd()
     statu = 'S'
@@ -162,7 +164,7 @@ def single(arg):
     indexfile = generate_index_file(grofile)
     if statu == 'S':
         try:
-            d1 = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+            d1 = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt, input_pdb=receptorfile)
         except:
             if len(ligandfiles) == 1:
                 logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
@@ -195,7 +197,7 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
 
     args = [(receptor, ligandfile, simParas,
              ligandfiles, mmpbsafile, 1,
-             pbsaParas, verbose) for ligandfile in sorted(ligandfiles)]
+             pbsaParas, verbose, receptorfile) for ligandfile in sorted(ligandfiles)]
     if len(args) == 1:
         df = single(args[0])
     else:
@@ -258,7 +260,7 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
         indexfile = generate_index_file(grofile)
         if 'startframe' not in pbsaParas:
             pbsaParas["startframe"] = 2
-        deltaG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt, verbose=verbose)
+        deltaG = traj_pipeline(grofile, trajfile=xtcfile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt, verbose=verbose, input_pdb=receptorfile)
         ligandnames.extend([ligandName]*simParas['nframe'])
         status.extend(['S']*simParas['nframe'])
         if df is None:
