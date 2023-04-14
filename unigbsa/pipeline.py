@@ -42,7 +42,8 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
        raise Exception('Error convert %s to %s'%(complexfile, reresfile))
     pbsa = GBSA()
     pbsa.complex = os.path.abspath(reresfile)
-    pbsa.input_pdb = os.path.abspath(input_pdb)
+    if input_pdb:
+        pbsa.input_pdb = os.path.abspath(input_pdb)
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
     detal_G = pbsa.extract_result()
