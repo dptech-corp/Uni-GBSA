@@ -4,7 +4,7 @@ import pandas as pd
 
 from unigbsa.settings import gmx_MMPBSA, MPI, logging
 from unigbsa.utils import obtain_id_from_index
-from unigbsa.gbsa.utils import obtain_num_of_frame
+from unigbsa.gbsa.utils import obtain_num_of_frame, mapping_resname
 from unigbsa.gbsa.parameters import generate_input_file
 from unigbsa.gbsa.io import parse_GMXMMPBSA_RESULTS
 
@@ -84,7 +84,7 @@ class GBSA(object):
         RC = os.system(cmd)
         if RC != 0:
             raise Exception('ERROR run: %s \nPlease ckeck the log file for details: %s'%(cmd, os.path.abspath("mmpbsa.log")))
-        self.save_results()
+        self.extract_result()
         self.verbose = verbose
         self.clean(verbose=verbose)
         print('='*80)
@@ -107,7 +107,7 @@ class GBSA(object):
 
     def extract_result(self, energyfile='Energy.csv'):
         if self.deltaG is None:
-             self.save_results()
+            self.save_results()
         return self.deltaG
 
     def extract_result_v14(self, energyfile='FINAL_RESULTS_MMPBSA.dat'):
@@ -165,11 +165,15 @@ class GBSA(object):
                     else:
                         logging.warning("Found a DELTA G without name!")
         return detal_G
-        
-    def save_results(self, mmxsafile=None):
+   
+    def save_results(self, energyfile='Energy.csv', decfile='../Dec.csv', mmxsafile=None):
         if mmxsafile is None:
             mmxsafile = os.path.join(self.workdir, 'COMPACT_MMXSA_RESULTS.mmxsa')
         if not os.path.exists(mmxsafile):
             logging.warning('Not found mmxsa file!')
             return
         self.deltaG, self.resG = parse_GMXMMPBSA_RESULTS(mmxsafile=mmxsafile)
+        if self.resG is not None:
+            resdic = mapping_resname(self.input_pdb, self.complex)
+            self.resG['resid'] = [k if k not in resdic else resdic[k] for k in self.resG['resid']]
+            self.resG.to_csv(decfile)

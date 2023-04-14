@@ -65,5 +65,6 @@ class TestPipline(unittest.TestCase):
         ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_md(pdbfile, ligandfiles)
 
+
 if __name__ == "__main__":
     unittest.main()
