@@ -326,7 +326,7 @@ def obtain_net_charge(sdfile):
     # Read the MOL or SDF file
     mol = openbabel.OBMol()
     with open(sdfile, 'r') as file:
-        format = 'sdf' if 'sdf' in sdfile else 'mol'
+        format = sdfile[-3:]
         file.seek(0)  # Reset the file pointer
         obConversion = openbabel.OBConversion()
         obConversion.SetInFormat(format)
