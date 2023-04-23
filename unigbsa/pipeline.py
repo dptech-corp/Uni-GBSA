@@ -143,8 +143,8 @@ def single(arg):
             exit(256)
     if len(ligandfiles) == 1:
         logging.info('Running energy minimization: %s' % ligandName)
+    engine = GMXEngine()
     if statu == 'S':
-        engine = GMXEngine()
         try:
             minimgro, outtop = engine.run_to_minim(grofile, topfile,
                                                    boxtype=simParas['boxtype'],
@@ -172,7 +172,7 @@ def single(arg):
                 logging.warning('Failed to run GBSA for ligand: %s'%ligandName)
                 traceback.print_exc()
             statu = 'F_GBSA'
-    if not verbose:
+    if not verbose and statu == 'S':
         engine.clean(pdbfile=grofile)
     os.chdir(cwd)
     d1['ligandName'] = ligandName
