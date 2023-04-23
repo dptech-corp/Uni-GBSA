@@ -143,28 +143,29 @@ def single(arg):
             exit(256)
     if len(ligandfiles) == 1:
         logging.info('Running energy minimization: %s' % ligandName)
-    engine = GMXEngine()
-    try:
-        minimgro, outtop = engine.run_to_minim(grofile, topfile,
-                                               boxtype=simParas['boxtype'],
-                                               boxsize=simParas['boxsize'],
-                                               conc=simParas['conc'],
-                                               maxsol=simParas['maxsol'],
-                                               nt=1)
-        cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1' % (GMXEXE, minimgro, grofile)
-        RC = os.system(cmd)
-        if RC != 0:
-            raise Exception('Error convert %s to %s'%(minimgro, grofile))
-        shutil.copy(topfile, outtop)
-    except Exception as e:
-        if len(ligandfiles) == 1:
-            traceback.print_exc()
-            logging.warning('Failed to run simulation for ligand: %s' % ligandName)
-            exit(256)
-        statu = 'F_md'
-    indexfile = generate_index_file(grofile)
+    if statu == 'S':
+        engine = GMXEngine()
+        try:
+            minimgro, outtop = engine.run_to_minim(grofile, topfile,
+                                                   boxtype=simParas['boxtype'],
+                                                   boxsize=simParas['boxsize'],
+                                                   conc=simParas['conc'],
+                                                   maxsol=simParas['maxsol'],
+                                                   nt=1)
+            cmd = '%s editconf -f %s -o %s -resnr 1 >/dev/null 2>&1' % (GMXEXE, minimgro, grofile)
+            RC = os.system(cmd)
+            if RC != 0:
+                raise Exception('Error convert %s to %s'%(minimgro, grofile))
+            shutil.copy(topfile, outtop)
+        except Exception as e:
+            if len(ligandfiles) == 1:
+                traceback.print_exc()
+                logging.warning('Failed to run simulation for ligand: %s' % ligandName)
+                exit(256)
+            statu = 'F_md'
     if statu == 'S':
         try:
+            indexfile = generate_index_file(grofile)
             d1 = traj_pipeline(grofile, trajfile=grofile, topolfile=topfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt, input_pdb=receptorfile)
         except:
             if len(ligandfiles) == 1:
