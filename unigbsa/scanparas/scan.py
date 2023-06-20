@@ -137,7 +137,7 @@ def calc_R2(expfile, gbsa):
     else:
         GBSA = gbsa
     df = pd.merge(exp, GBSA, on='ligandName')
-    R  = df.corr().loc['TOTAL', 'dG_exp']
+    R  = df[['TOTAL', 'dG_exp']].corr().loc['TOTAL', 'dG_exp']
     return R, R**2
 
 def iter_paras(args) -> None:
