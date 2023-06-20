@@ -16,8 +16,8 @@ conda activate gbsa
 pip install unigbsa gmx_MMPBSA>=1.5.6 lickit
 ```
 
-### Install by dokcer images
-You can also build a dokcer image using this file or pull from the docker hub `docker pull dockerymh/unigbsa`
+### Install by docker images
+You can also build a docker image using this file or pull from the docker hub `docker pull dockerymh/unigbsa`
 ```Plaintext
 FROM continuumio/miniconda3
 
@@ -77,10 +77,10 @@ Frames    mode    detal_G(kcal/mole)
 ```
 
 ## Other Tools
-This packge contains many command lines: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
+This packge contains several commands: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
 
 ### unigbsa-scan
->An automatic parameter optimization prior to production MM/GB(PB)SA calculations.
+>Perform an automatic parameter optimization prior to production MM/GB(PB)SA calculations.
 ```Bash
 usage: unigbsa-scan [-h] [-i RECEPTOR] [-pd PROTDIR] [-l LIGAND [LIGAND ...]] [-ld LIGDIR] -e E -c PARASFILE [-o OUTDIR]
                     [-nt THREAD] [--verbose]
