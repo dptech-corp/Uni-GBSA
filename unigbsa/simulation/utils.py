@@ -1,5 +1,10 @@
 import os
-from unigbsa.settings import GMXEXE
+import uuid
+import shutil
+from pathlib import Path
+from unigbsa.settings import GMXEXE, logging
+
+
 def convert_format(inputfile, filetype, outfile=None, outtype='mol'):
     """
     Convert a file of type filetype to mol2 format
@@ -335,3 +340,77 @@ def obtain_net_charge(sdfile):
     # Calculate the net charge of the molecule
     net_charge = mol.GetTotalCharge()
     return net_charge
+
+
+def check_element(sdfile):
+    from openbabel import openbabel
+    ext = Path(sdfile).suffix[1:]
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats(ext, ext)
+    mol = openbabel.OBMol()
+    if not obConversion.ReadFile(mol, str(sdfile)):
+        return -1
+
+    acceptable_elements = {6, 7, 8, 16, 15, 1, 9, 17, 35, 53}
+    for atom in openbabel.OBMolAtomIter(mol):
+        element = atom.GetAtomicNum()
+        if element not in acceptable_elements:
+            return 1
+    return 0
+
+
+def check_forcefield(sdfile):
+    sqm_key = "grms_tol=0.005,qm_theory='AM1',scfconv=1.d-5,ndiis_attempts=700,maxcyc=0"
+    tmpdir = Path('/tmp') / str(uuid.uuid4())
+    sdfile = Path(sdfile).absolute()
+    net_charge = obtain_net_charge(str(sdfile))
+    tmpdir.mkdir(exist_ok=True)
+    cwd = os.getcwd()
+    os.chdir(tmpdir)
+    cmd = f'export OMP_NUM_THREADS=1;acpype -i {sdfile} -b MOL -a gaff -c bcc -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '
+    rc = os.system(cmd)
+    os.chdir(cwd)
+    shutil.rmtree(tmpdir)
+    if rc != 0:
+        return False
+    else:
+        return True
+
+
+def add_hydrogen(sdfile, outfile=None):
+    from openbabel import openbabel
+    extin = Path(sdfile).suffix[1:]
+    if outfile is None:
+        fname = str(uuid.uuid4()) + extin
+        outfile = Path('/tmp') / fname
+    extout = Path(outfile).suffix[1:]
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats(extin, extout)
+    mol = openbabel.OBMol()
+    obConversion.ReadFile(mol, str(sdfile))
+    mol.AddHydrogens()
+    mol_string = obConversion.WriteString(mol)
+    with open(outfile, 'w') as fw:
+        fw.write(mol_string)
+    return outfile
+
+
+def ligand_validate(sdfile, outfile=None):
+    rc = check_element(sdfile)
+    if rc == -1:
+        logging.error(f'Failed to load {sdfile}, please check your input {sdfile}.')
+        exit(256)
+    elif rc == 1:
+        logging.error(f'Ligand file only accept C N O S P H F Cl Br I, please check your input {sdfile}.')
+        exit(257)
+    rc = check_forcefield(sdfile)
+    if not rc:
+        logging.warning('Failed to generate topology, try to repair input ligand.')
+        outfile = add_hydrogen(sdfile, outfile=outfile)
+        rc = check_forcefield(outfile)
+        if not rc:
+            logging.error(f'Failed to generate topology after prepare ligand, please check your input {sdfile}.')
+        else:
+            return outfile
+    else:
+        return sdfile
