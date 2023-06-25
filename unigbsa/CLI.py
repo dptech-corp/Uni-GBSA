@@ -7,6 +7,7 @@ from glob import glob
 from .utils import generate_index_file, process_pbc
 
 from .simulation import topology, mdrun
+from .simulation.utils import ligand_validate
 from .settings import logging
 from .version import __version__
 
@@ -292,3 +293,16 @@ def mmpbsa_plot():
             func = funcdic[fname]
             logging.info('Analysis file: %s'%fname)
             func(datfile, outdir=oup)
+
+
+def ligand_check():
+    parser = argparse.ArgumentParser(description='Analysis and plot results for MMPBSA.')
+    parser.add_argument('-i', help='Ligand file to validate.', required=True)
+    parser.add_argument('-o', help='Ligand file after validate. default: None', default=None)
+    parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
+
+    args = parser.parse_args()
+    ligandfile, outfile = args.i, args.o
+    outfile = ligand_validate(ligandfile, outfile)
+    if os.path.exists(outfile):
+        print('Your ligand is OK as the input for unigbsa.')
