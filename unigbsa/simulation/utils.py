@@ -342,23 +342,6 @@ def obtain_net_charge(sdfile):
     return net_charge
 
 
-def check_element(sdfile):
-    from openbabel import openbabel
-    ext = Path(sdfile).suffix[1:]
-    obConversion = openbabel.OBConversion()
-    obConversion.SetInAndOutFormats(ext, ext)
-    mol = openbabel.OBMol()
-    if not obConversion.ReadFile(mol, str(sdfile)):
-        return -1
-
-    acceptable_elements = {6, 7, 8, 16, 15, 1, 9, 17, 35, 53}
-    for atom in openbabel.OBMolAtomIter(mol):
-        element = atom.GetAtomicNum()
-        if element not in acceptable_elements:
-            return 1
-    return 0
-
-
 def check_forcefield(sdfile):
     sqm_key = "grms_tol=0.005,qm_theory='AM1',scfconv=1.d-5,ndiis_attempts=700,maxcyc=0"
     tmpdir = Path('/tmp') / str(uuid.uuid4())
@@ -377,18 +360,92 @@ def check_forcefield(sdfile):
         return True
 
 
+def check_element(sdfile):
+    from openbabel import openbabel
+    ext = Path(sdfile).suffix[1:]
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats(ext, ext)
+    mol = openbabel.OBMol()
+    if not obConversion.ReadFile(mol, str(sdfile)):
+        return -1
+
+    acceptable_elements = {6, 7, 8, 16, 15, 1, 9, 17, 35, 53}
+    for atom in openbabel.OBMolAtomIter(mol):
+        element = atom.GetAtomicNum()
+        if element not in acceptable_elements:
+            return 1
+    return 0
+
+
+def get_total_valence_electrons(sdfile):
+    from openbabel import openbabel
+    extin = Path(sdfile).suffix[1:]
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats(extin, extin)
+    mol = openbabel.OBMol()
+    obConversion.ReadFile(mol, str(sdfile))
+    total_valence_electrons = 0
+    for atom in openbabel.OBMolAtomIter(mol):
+        total_valence_electrons += atom.GetAtomicNum() - atom.GetFormalCharge()
+    return total_valence_electrons
+
+
+def get_electronegativity(atomic_number):
+    electronegativity_table = {
+        1: 2.20,  # Hydrogen (H)
+        6: 2.55,  # Carbon (C)
+        7: 3.04,  # Nitrogen (N)
+        8: 3.44,  # Oxygen (O)
+        15: 2.19,  # Phosphorus (P)
+        16: 2.58,  # Sulfur (S)
+        9: 3.98,  # Fluorine (F)
+        17: 3.16,  # Chlorine (Cl)
+        35: 2.96,  # Bromine (Br)
+        53: 2.66,  # Iodine (I)
+    }
+    return electronegativity_table.get(atomic_number, 0)
+
+
+def adjust_charge_based_on_electronegativity(ob_mol):
+    from openbabel import openbabel
+    max_electronegativity = 0
+    target_atom = None
+
+    for atom in openbabel.OBMolAtomIter(ob_mol):
+        if atom.GetFormalCharge() != 0:
+            electronegativity = get_electronegativity(atom.GetAtomicNum())
+            if electronegativity > max_electronegativity:
+                max_electronegativity = electronegativity
+                target_atom = atom
+
+    if target_atom is not None:
+        if target_atom.GetFormalCharge() > 0:
+            target_atom.SetFormalCharge(target_atom.GetFormalCharge() - 1)
+        elif target_atom.GetFormalCharge() < 0:
+            target_atom.SetFormalCharge(target_atom.GetFormalCharge() + 1)
+
+
 def add_hydrogen(sdfile, outfile=None):
     from openbabel import openbabel
     extin = Path(sdfile).suffix[1:]
     if outfile is None:
-        fname = str(uuid.uuid4()) + extin
+        fname = str(uuid.uuid4()) + '.' + extin
         outfile = Path('/tmp') / fname
     extout = Path(outfile).suffix[1:]
     obConversion = openbabel.OBConversion()
     obConversion.SetInAndOutFormats(extin, extout)
     mol = openbabel.OBMol()
     obConversion.ReadFile(mol, str(sdfile))
+    # Correct valence information
+    pH = 7.4
+    charge_model = openbabel.OBChargeModel.FindType("mmff94")
+    charge_model.ComputeCharges(mol, str(pH))
+    mol.CorrectForPH()
+    mol.PerceiveBondOrders()
     mol.AddHydrogens()
+    total_valence_electrons = sum([atom.GetAtomicNum() - atom.GetFormalCharge() for atom in openbabel.OBMolAtomIter(mol)])
+    if total_valence_electrons % 2 == 1:
+        adjust_charge_based_on_electronegativity(mol)
     mol_string = obConversion.WriteString(mol)
     with open(outfile, 'w') as fw:
         fw.write(mol_string)
@@ -403,13 +460,14 @@ def ligand_validate(sdfile, outfile=None):
     elif rc == 1:
         logging.error(f'Ligand file only accept C N O S P H F Cl Br I, please check your input {sdfile}.')
         exit(257)
-    rc = check_forcefield(sdfile)
-    if not rc:
-        logging.warning('Failed to generate topology, try to repair input ligand.')
+    total_valence_electrons = get_total_valence_electrons(sdfile)
+    if total_valence_electrons % 2 == 1:
+        logging.warning(f'The total valence electrons of your ligand is odd({total_valence_electrons}), try to repair input ligand.')
         outfile = add_hydrogen(sdfile, outfile=outfile)
-        rc = check_forcefield(outfile)
-        if not rc:
-            logging.error(f'Failed to generate topology after prepare ligand, please check your input {sdfile}.')
+        total_valence_electrons = get_total_valence_electrons(outfile)
+        if total_valence_electrons % 2 == 1:
+            logging.error(f'The total valence electrons of your ligand is still odd({total_valence_electrons}) after repair ligand, please check your input {sdfile}.')
+            exit(257)
         else:
             return outfile
     else:
