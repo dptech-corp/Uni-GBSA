@@ -350,7 +350,7 @@ def check_forcefield(sdfile):
     tmpdir.mkdir(exist_ok=True)
     cwd = os.getcwd()
     os.chdir(tmpdir)
-    cmd = f'export OMP_NUM_THREADS=1;acpype -i {sdfile} -b MOL -a gaff -c bcc -n {net_charge} -k "{sqm_key}" -f >acpype.log 2>&1 '
+    cmd = f'export OMP_NUM_THREADS=1;acpype -i {sdfile} -b MOL -a gaff -c bcc -n {net_charge} -k "{sqm_key}" >acpype.log 2>&1 '
     rc = os.system(cmd)
     os.chdir(cwd)
     shutil.rmtree(tmpdir)
@@ -461,7 +461,7 @@ def ligand_validate(sdfile, outfile=None):
         logging.error(f'Ligand file only accept C N O S P H F Cl Br I, please check your input {sdfile}.')
         exit(257)
     total_valence_electrons = get_total_valence_electrons(sdfile)
-    if total_valence_electrons % 2 == 1:
+    if total_valence_electrons % 2 == 1 or not check_forcefield(sdfile):
         logging.warning(f'The total valence electrons of your ligand is odd({total_valence_electrons}), try to repair input ligand.')
         outfile = add_hydrogen(sdfile, outfile=outfile)
         total_valence_electrons = get_total_valence_electrons(outfile)
