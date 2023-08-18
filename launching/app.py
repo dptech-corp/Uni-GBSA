@@ -179,6 +179,22 @@ class GBSAModel(
     ...
 
 
+def prep_protein(pdbfile):
+    outfile = pdbfile[:-4] + '_prep.pdb'
+    args = [
+        '-i', pdbfile,
+        '-o', outfile,
+        '-mode', 'gromacs',
+        ]
+    print(args)
+    argstr = ' '.join(args)
+    cmd = '/bin/bash -c "source ~/.bashrc; conda activate protprep; unisp-prot %s"'%argstr
+    RC = os.system(cmd)
+    if RC != 0:
+        return -2
+    return outfile
+
+
 def gbsa_runner(opts: GBSAModel) -> int:
     status = 0
     try:
@@ -217,6 +233,9 @@ def gbsa_runner(opts: GBSAModel) -> int:
                 }
             }
         input_protein = opts.input_protein.get_path()
+        preped_protein = prep_protein(input_protein)
+        if preped_protein == -2:
+            raise Exception('ERROR prep protein file.')
         input_dir = os.path.dirname(input_protein)
         output_dir = str(opts.output_dir)
         if not os.path.exists(output_dir):
@@ -228,9 +247,10 @@ def gbsa_runner(opts: GBSAModel) -> int:
 
         cmd = sh.Command('unigbsa-pipeline')
         args = [
-            '-i', opts.input_protein.get_path(),
-            '-l', " ".join(opts.input_ligands),
-            '-c', configfile,
+            '-i', preped_protein,
+            '-l', *opts.input_ligands,
+            '-validate',
+            '-c', str(configfile),
             '-o', csvoutfile
         ]
 
