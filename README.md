@@ -1,7 +1,7 @@
 Uni-GBSA: An Automatic Workflow to Perform MM/GB(PB)SA Calculations for Virtual Screening
 ==============================================================================
 
-[[ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/63345399f764e656800664e7)]
+[[Briefings in Bioinformatics](https://academic.oup.com/bib/advance-article/doi/10.1093/bib/bbad218/7199492)]
 
 ## Backgroud
 
@@ -16,8 +16,8 @@ conda activate gbsa
 pip install unigbsa gmx_MMPBSA>=1.5.6 lickit
 ```
 
-### Install by dokcer images
-You can also build a dokcer image using this file or pull from the docker hub `docker pull dockerymh/unigbsa`
+### Install by docker images
+You can also build a docker image using this file or pull from the docker hub `docker pull dockerymh/unigbsa`
 ```Plaintext
 FROM continuumio/miniconda3
 
@@ -77,10 +77,10 @@ Frames    mode    detal_G(kcal/mole)
 ```
 
 ## Other Tools
-This packge contains many command lines: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
+This packge contains several commands: `unigbsa-scan`, `unigbsa-pipeline`, `unigbsa-traj`, `unigbsa-pbc`, `unigbsa-buildtop`, `unigbsa-buildsys`, `unigbsa-md`.
 
 ### unigbsa-scan
->An automatic parameter optimization prior to production MM/GB(PB)SA calculations.
+>Perform an automatic parameter optimization prior to production MM/GB(PB)SA calculations.
 ```Bash
 usage: unigbsa-scan [-h] [-i RECEPTOR] [-pd PROTDIR] [-l LIGAND [LIGAND ...]] [-ld LIGDIR] -e E -c PARASFILE [-o OUTDIR]
                     [-nt THREAD] [--verbose]
@@ -310,5 +310,5 @@ unigbsa-buildtop -p example/2fvy/protein.pdb -pf amber99sb -l example/2fvy/BGC.m
 
 ## Citation
 ```plaintext
-Yang M, Wang D, Zheng H. Uni-GBSA: An Automatic Workflow to Perform MM/GB(PB)SA Calculations for Virtual Screening. ChemRxiv. Cambridge: Cambridge Open Engage; 2022; This content is a preprint and has not been peer-reviewed.
+Maohua Yang and others, Uni-GBSA: an open-source and web-based automatic workflow to perform MM/GB(PB)SA calculations for virtual screening, Briefings in Bioinformatics, 2023;, bbad218, https://doi.org/10.1093/bib/bbad218.
 ```
