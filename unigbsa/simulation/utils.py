@@ -427,6 +427,22 @@ def adjust_charge_based_on_electronegativity(ob_mol):
 
 def add_hydrogen(sdfile, outfile=None):
     from openbabel import openbabel
+    extin = extout = Path(sdfile).suffix[1:]
+    obConversion = openbabel.OBConversion()
+    obConversion.SetInAndOutFormats(extin, extout)
+    mol = openbabel.OBMol()
+    obConversion.ReadFile(mol, str(sdfile))
+    mol.AddHydrogens()
+    mol_string = obConversion.WriteString(mol)
+    if outfile:
+        with open(outfile, 'w') as fw:
+            fw.write(mol_string)
+    else:
+        return mol
+
+
+def repair_ligand(sdfile, outfile=None):
+    from openbabel import openbabel
     extin = Path(sdfile).suffix[1:]
     if outfile is None:
         fname = str(uuid.uuid4()) + '.' + extin
@@ -436,19 +452,27 @@ def add_hydrogen(sdfile, outfile=None):
     obConversion.SetInAndOutFormats(extin, extout)
     mol = openbabel.OBMol()
     obConversion.ReadFile(mol, str(sdfile))
+    mol.AddHydrogens()
+    mol.DeleteHydrogens()
     # Correct valence information
     pH = 7.4
     charge_model = openbabel.OBChargeModel.FindType("mmff94")
     charge_model.ComputeCharges(mol, str(pH))
     mol.CorrectForPH()
     mol.PerceiveBondOrders()
-    mol.AddHydrogens()
     total_valence_electrons = sum([atom.GetAtomicNum() - atom.GetFormalCharge() for atom in openbabel.OBMolAtomIter(mol)])
     if total_valence_electrons % 2 == 1:
         adjust_charge_based_on_electronegativity(mol)
     mol_string = obConversion.WriteString(mol)
+    new_string = []
+    for i, line in enumerate(mol_string.split('\n')):
+        if i >= 4 and len(line) >= 30 and line.startswith(' '):
+            line = line[:42] + '  0  0  0  0  0  0  0  0  0'
+        new_string.append(line)
+    mol_string = '\n'.join(new_string)
     with open(outfile, 'w') as fw:
         fw.write(mol_string)
+    add_hydrogen(outfile, outfile)
     return outfile
 
 
@@ -462,11 +486,11 @@ def ligand_validate(sdfile, outfile=None):
         exit(257)
     total_valence_electrons = get_total_valence_electrons(sdfile)
     if total_valence_electrons % 2 == 1 or not check_forcefield(sdfile):
-        logging.warning(f'The total valence electrons of your ligand is odd({total_valence_electrons}), try to repair input ligand.')
-        outfile = add_hydrogen(sdfile, outfile=outfile)
+        logging.warning(f'The total valence electrons of your ligand is odd({total_valence_electrons}) or forcefield check error, try to repair input ligand.')
+        outfile = repair_ligand(sdfile, outfile=outfile)
         total_valence_electrons = get_total_valence_electrons(outfile)
-        if total_valence_electrons % 2 == 1:
-            logging.error(f'The total valence electrons of your ligand is still odd({total_valence_electrons}) after repair ligand, please check your input {sdfile}.')
+        if total_valence_electrons % 2 == 1 or not check_forcefield(outfile):
+            logging.error(f'The total valence electrons of your ligand is stil odd({total_valence_electrons}) or forcefield check error after repair ligand, please check your input {sdfile}.')
             exit(257)
         else:
             return outfile

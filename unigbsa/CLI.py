@@ -303,6 +303,12 @@ def ligand_check():
 
     args = parser.parse_args()
     ligandfile, outfile = args.i, args.o
-    outfile = ligand_validate(ligandfile, outfile)
-    if os.path.exists(outfile):
-        print('Your ligand is OK as the input for unigbsa.')
+    if not outfile:
+        outfile = ligand_validate(ligandfile, outfile)
+        if outfile == ligandfile:
+            print(f'{ligandfile} is OK as the input for unigbsa.')
+        else:
+            print(f'{ligandfile} is not OK as the input for unigbsa. But unigbsa-validate can repair it.')
+    else:
+        outfile = ligand_validate(ligandfile, outfile)
+        print(f'{outfile} is OK as the input for unigbsa.')
