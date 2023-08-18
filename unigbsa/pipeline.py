@@ -10,6 +10,7 @@ from unigbsa.gbsa.gbsarun import GBSA
 from unigbsa.utils import generate_index_file, load_configue_file
 from unigbsa.simulation.mdrun import GMXEngine
 from unigbsa.simulation.topology import build_topol, build_protein
+from unigbsa.simulation.utils import ligand_validate
 from unigbsa.settings import logging, DEFAULT_CONFIGURE_FILE, GMXEXE, set_OMP_NUM_THREADS
 
 from tqdm import tqdm
@@ -52,7 +53,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
         print('%6d    %4s    %18.4f  '%(irow['Frames'], irow['mode'], irow['TOTAL']))
     return detal_G
 
-def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfile='BindingEnergy.csv', verbose=False):
+def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfile='BindingEnergy.csv', validate=False, verbose=False):
     """
     This function takes a receptorfile and ligandfile, and build a complex.pdb and complex.top file
     
@@ -81,7 +82,8 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
         if not os.path.exists(ligandName):
             os.mkdir(ligandName)
         os.chdir(ligandName)
-
+        if validate:
+            ligandfile = ligand_validate(ligandfile, ligandName+'.mol')
         grofile = 'complex.pdb'
         topfile = 'complex.top'
         logging.info('Build ligand topology: %s'%ligandName)
@@ -118,7 +120,7 @@ def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfi
 
 
 def single(arg):
-    receptor, ligandfile, simParas, ligandfiles, mmpbsafile, nt, pbsaParas, verbose, receptorfile = arg
+    receptor, ligandfile, simParas, ligandfiles, mmpbsafile, nt, pbsaParas, validate, verbose, receptorfile = arg
     d1 = pd.DataFrame({'Frames': 1, 'mode':pbsaParas['modes'], 'complex':0.0,'receptor':0.0,'ligand':0.0,'Internal':0.0,'Van der Waals':0.0,'Electrostatic':0,'Polar Solvation':0.0,'Non-Polar Solvation':0.0,'Gas':0.0,'Solvation':0.0,'TOTAL':0.0}, index=[1])
     cwd = os.getcwd()
     statu = 'S'
@@ -127,6 +129,8 @@ def single(arg):
     if not os.path.exists(ligandName):
         os.mkdir(ligandName)
     os.chdir(ligandName)
+    if validate:
+        ligandfile = ligand_validate(ligandfile, ligandName+'.mol')
     grofile = 'complex.pdb'
     topfile = 'complex.top'
     if len(ligandfiles) == 1:
@@ -179,7 +183,7 @@ def single(arg):
     d1['status'] = statu
     return d1
 
-def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', verbose=False):
+def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile='BindingEnergy.csv', validate=False, verbose=False):
     """
     It runs the simulation pipeline for each ligand.
     
@@ -199,7 +203,7 @@ def minim_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outf
 
     args = [(receptor, ligandfile, simParas,
              ligandfiles, mmpbsafile, 1,
-             pbsaParas, verbose, receptorfile) for ligandfile in sorted(ligandfiles)]
+             pbsaParas, validate, verbose, receptorfile) for ligandfile in sorted(ligandfiles)]
     if len(args) == 1:
         df = single(args[0])
     else:
@@ -285,6 +289,7 @@ def main(args=None):
     parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
+    parser.add_argument('-validate', help='Validate the ligand file. default: False', action='store_true', default=False)
     parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=multiprocessing.cpu_count())
     parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
@@ -323,7 +328,7 @@ def main(args=None):
         paras['GBSA']['modes'] = gbtype
 
     if paras['simulation']['mode'] == 'em':
-        minim_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
+        minim_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, validate=args.validate, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'md':
         md_pipeline(receptorfile=receptor, ligandfiles=ligands, paras=paras, outfile=outfile, mmpbsafile=mmpbsafile, verbose=verbose, nt=nt)
     elif paras['simulation']['mode'] == 'input':

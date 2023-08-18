@@ -51,7 +51,8 @@ setup(
          'unigbsa-buildsys = unigbsa.CLI:simulation_builder',
          'unigbsa-md = unigbsa.CLI:simulation_run',
          'unigbsa-plots = unigbsa.CLI:mmpbsa_plot',
-         'unigbsa-scan = unigbsa.scanparas.scan:main'
+         'unigbsa-scan = unigbsa.scanparas.scan:main',
+         'unigbsa-validate = unigbsa.CLI:ligand_check'
      ]},
     include_package_data=True
 )
