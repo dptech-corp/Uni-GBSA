@@ -14,10 +14,10 @@ from .version import __version__
 
 
 def PBC_main():
-    parser = argparse.ArgumentParser(description='Auto process PBC for gromacs MD trajector.')
+    parser = argparse.ArgumentParser(description='Auto process PBC for gromacs MD trajectory.')
     parser.add_argument('-s', dest='tpr', help='TPR file generated from gromacs or coordinate file.', required=True)
-    parser.add_argument('-f', dest='xtc', help='Trajector file to process PBC.', required=True)
-    parser.add_argument('-o', dest='out', help='Result file after processed PBC.', default=None)
+    parser.add_argument('-f', dest='xtc', help='Trajectory file to process PBC.', required=True)
+    parser.add_argument('-o', dest='out', help='Results file after processed PBC.', default=None)
     parser.add_argument('-n', dest='ndx', help='Index file contains the center and output group.', default=None)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
@@ -35,10 +35,10 @@ def topol_builder():
     parser.add_argument('-p', dest='protein', help='Protein file or directory to build topology.', default="")
     parser.add_argument('-l', dest='ligand', help='Ligand file or directory to build topology.', default="")
     parser.add_argument('-pf', dest='protforce', help='Protein forcefield.', default='amber03')
-    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
-    parser.add_argument('-o', dest='outdir', help='A output directory.', default='GMXtop')
+    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefield: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
+    parser.add_argument('-o', dest='outdir', help='The output directory.', default='GMXtop')
     parser.add_argument('-c', help='Combine the protein and ligand topology. Suppport for one protein and more ligands. default:True', action='store_true', default=True)
-    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
+    parser.add_argument('-nt', dest='threads', help='Number of threads to run this simulation.', default=4)
     parser.add_argument('-verbose', help='Keep the directory or not.', default=False, action='store_true')
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
@@ -47,7 +47,7 @@ def topol_builder():
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
     verbose = args.verbose
     if not protein and not ligand:
-        print('Not found input file!')
+        print('Could not find the input file!')
 
     proteinfiles, ligandfiles = [], []
     if os.path.isdir(protein):
@@ -75,23 +75,23 @@ def topol_builder():
         ligandName = os.path.split(ligandfile)[-1][:-4]
         outtop, outcoord, outitp = os.path.join(outdir, ligandName+'.top'), os.path.join(outdir, ligandName+'.pdb'), os.path.join(outdir, ligandName+'.itp')
         # outcoord parameter is useless
-        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord, itpfile=outitp, nt=args.thread)
+        ligtop, liggro = topology.build_lignad(ligandfile, forcefield=ligandForcefield, charge_method='bcc', outtop=outtop, outcoord=outcoord, itpfile=outitp, nt=args.threads)
         if cF:
             comxtop, comxcoord = os.path.join(outdir, "%s_%s.top"%(proteinName, ligandName)), os.path.join(outdir, "%s_%s.pdb"%(proteinName, ligandName))
-            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose, nt=args.thread)
+            topology.build_topol((prottop, protgro), (ligtop, liggro), outtop=comxtop, outpdb=comxcoord, verbose=verbose, nt=args.threads)
 
 def simulation_builder():
     parser = argparse.ArgumentParser(description='Build MD simulation for input file.')
     parser.add_argument('-p', dest='protein', help='Protein file for the simulation.', required=True)
     parser.add_argument('-l', dest='ligand', help='Ligand file or directory for the simulation.', default="")
     parser.add_argument('-pf', dest='protforce', help='Protein forcefield.', default='amber03')
-    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
+    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefield: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
     parser.add_argument('-bt', dest='boxtype', help='Simulation box type, default: triclinic', default='triclinic')
     parser.add_argument('-box', help='Simulation box size.', nargs=3, type=float, default=None)
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
-    parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
-    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
+    parser.add_argument('-o', dest='outdir', help='The output directory.', default=None)
+    parser.add_argument('-nt', dest='threads', help='Number of threads to run this simulation.', default=4)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args()
@@ -123,7 +123,7 @@ def simulation_builder():
 
     if len(ligandfiles) == 0:
         logging.info('No ligand found, build protein only.')
-        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile, nt=args.thread)
+        topology.build_topol(receptor, None, outpdb=grofile, outtop=topfile, nt=args.threads)
 
         logging.info('Build simulation for %s'%proteinName)
         engine = mdrun.GMXEngine()
@@ -142,7 +142,7 @@ def simulation_builder():
             os.chdir(ligandName)
 
             logging.info('Build ligand topology: %s'%ligandName)
-            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield, nt=args.thread)
+            topology.build_topol(receptor, ligandfile, outpdb=grofile, outtop=topfile, ligandforce=ligandForcefield, nt=args.threads)
 
             logging.info('Building simulation for: %s'%ligandName)
             engine = mdrun.GMXEngine()
@@ -160,22 +160,22 @@ def simulation_run():
     parser.add_argument('-p', dest='protein', help='Protein file for the simulation.', required=True)
     parser.add_argument('-l', dest='ligand', help='Ligand file or directory for the simulation.', default="")
     parser.add_argument('-pf', dest='protforce', help='Protein forcefield.', default='amber03')
-    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefiled: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
+    parser.add_argument('-lf', dest='ligforce', help='Ligand forcefield: gaff or gaff2.', default='gaff', choices=['gaff','gaff2'])
     parser.add_argument('-bt', dest='boxtype', help='Simulation box type, default: triclinic', default='triclinic')
     parser.add_argument('-box', help='Simulation box size.', nargs=3, type=float, default=None)
     parser.add_argument('-d', help='Distance between the solute and the box.', default=0.9, type=float)
     parser.add_argument('-conc', help='Specify salt concentration (mol/liter). default=0.15', default=0.15, type=float)
-    parser.add_argument('-o', dest='outdir', help='A output directory.', default=None)
+    parser.add_argument('-o', dest='outdir', help='The output directory.', default=None)
     parser.add_argument('-nsteps', dest='nstep', help='Simulation steps. default:2500', default=2500, type=int)
-    parser.add_argument('-nframe', dest='nframe', help='Number of frame to save for the xtc file. default:100', default=100, type=int)
-    parser.add_argument('-nt', dest='thread', help='Number of thread to run this simulation.', default=4)
+    parser.add_argument('-nframe', dest='nframe', help='Number of frames to save for the xtc file. default:100', default=100, type=int)
+    parser.add_argument('-nt', dest='threads', help='Number of threads to run this simulation.', default=4)
     parser.add_argument('-verbose', help='Keep all the files in the simulation.', action='store_true', default=False)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
     args = parser.parse_args()
     proteinfile, ligand, outdir = args.protein, args.ligand, args.outdir
     proteinForcefield, ligandForcefield = args.protforce, args.ligforce
-    boxtype, box, conc, boxsize, nsteps, nframe, nt = args.boxtype, args.box, args.conc, args.d, args.nstep, args.nframe, args.thread
+    boxtype, box, conc, boxsize, nsteps, nframe, nt = args.boxtype, args.box, args.conc, args.d, args.nstep, args.nframe, args.threads
     verbose = args.verbose
     if box:
         boxsize = box
@@ -239,14 +239,14 @@ def simulation_run():
 
 def traj_pipeline(args=None):
     from unigbsa.gbsa.gbsarun import GBSA
-    parser = argparse.ArgumentParser(description='Free energy calcaulated by PBSA method.')
+    parser = argparse.ArgumentParser(description='Free energy calcaulation by MM/GB(PB)SA method.')
     parser.add_argument('-i', dest='INP', help='A pdb file or a tpr file for the trajectory.', required=True)
     parser.add_argument('-p', dest='TOP', help='Gromacs topol file for the system.', required=True)
-    parser.add_argument('-ndx', dest='ndx', help='Gromacs index file, must contain recepror and ligand group.', required=True)
-    parser.add_argument('-m', dest='mode', help='MMPBSA mode', nargs='+', default=['GB'])
-    parser.add_argument('-f', dest='mmpbsafile', help='Input mmpbsa file', default=None)
-    parser.add_argument('-t', dest='TRAJ', help='A trajectory file contains many structure frames. File format: xtc, pdb, gro...', default=None)
-    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=1)
+    parser.add_argument('-ndx', dest='ndx', help='Gromacs index file, must contain receptor and ligand group.', required=True)
+    parser.add_argument('-m', dest='mode', help='MM/GB(PB)SA mode', nargs='+', default=['GB'])
+    parser.add_argument('-f', dest='mmpbsafile', help='Input MM/GB(PB)SA file', default=None)
+    parser.add_argument('-t', dest='TRAJ', help='A trajectory file containing many structure frames. File format: xtc, pdb, gro...', default=None)
+    parser.add_argument('-nt', dest='threads', help='Set number of threads to run this program.', type=int, default=1)
     parser.add_argument('-D', dest='DEBUG', help='DEBUG model, keep all the files.', default=False, action='store_true')
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
     
@@ -255,7 +255,7 @@ def traj_pipeline(args=None):
     else:
         args = parser.parse_args(args)
     #exit(0)
-    complexFile, topolFile, indexFile, trajFile, debug, mmpbsafile, nt = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.mmpbsafile, args.thread
+    complexFile, topolFile, indexFile, trajFile, debug, mmpbsafile, nt = args.INP, args.TOP, args.ndx, args.TRAJ, args.DEBUG, args.mmpbsafile, args.threads
     if trajFile is None:
         trajFile = complexFile
     if mmpbsafile:
@@ -272,9 +272,9 @@ def traj_pipeline(args=None):
 
 def mmpbsa_plot():
     from unigbsa.gbsa import plots
-    parser = argparse.ArgumentParser(description='Analysis and plot results for MMPBSA.')
-    parser.add_argument('-i', help='MMPBSA result directory. Which contains FINAL_RESULTS_MMPBSA.dat, FINAL_DECOMP_MMPBSA.dat, EO.csv or DEO.csv file.', required=True)
-    parser.add_argument('-o', help='Figure output directory. default: analysis', default='analysis')
+    parser = argparse.ArgumentParser(description='Analyze and plot results for MM/GB(PB)SA.')
+    parser.add_argument('-i', help='MM/GB(PB)SA results directory. Should contain FINAL_RESULTS_MMPBSA.dat, FINAL_DECOMP_MMPBSA.dat, EO.csv or DEO.csv file.', required=True)
+    parser.add_argument('-o', help='Output directory for the Figures. default: analysis', default='analysis')
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    
 
 
@@ -296,7 +296,7 @@ def mmpbsa_plot():
 
 
 def ligand_check():
-    parser = argparse.ArgumentParser(description='Analysis and plot results for MMPBSA.')
+    parser = argparse.ArgumentParser(description='Validate and check an input ligand')
     parser.add_argument('-i', help='Ligand file to validate.', required=True)
     parser.add_argument('-o', help='Ligand file after validate. default: None', default=None)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))    

@@ -32,7 +32,7 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
       debug: if True, will print out all the debug messages. Defaults to False
     
     Returns:
-      detal_G is a dictionary, the key is the mode, the value is a list, the first element is the
+      delta_G is a dictionary, the key is the mode, the value is a list, the first element is the
     average value, the second element is the standard deviation.
     """
 
@@ -47,11 +47,11 @@ def traj_pipeline(complexfile, trajfile, topolfile, indexfile, pbsaParas=None, m
         pbsa.input_pdb = os.path.abspath(input_pdb)
     mmpbsafile = pbsa.set_paras(complexfile=reresfile, trajectoryfile=trajfile, topolfile=topolfile, indexfile=indexfile, pbsaParas=pbsaParas, mmpbsafile=mmpbsafile, nt=nt)
     pbsa.run(verbose=verbose)
-    detal_G = pbsa.extract_result()
-    print("Frames    mode    detal_G(kcal/mole)")
-    for i, irow in detal_G.iterrows():
+    delta_G = pbsa.extract_result()
+    print("Frames    mode    delta_G(kcal/mole)")
+    for i, irow in delta_G.iterrows():
         print('%6d    %4s    %18.4f  '%(irow['Frames'], irow['mode'], irow['TOTAL']))
-    return detal_G
+    return delta_G
 
 def base_pipeline(receptorfile, ligandfiles, paras, nt=1, mmpbsafile=None, outfile='BindingEnergy.csv', validate=False, verbose=False):
     """
@@ -282,21 +282,21 @@ def md_pipeline(receptorfile, ligandfiles, paras, mmpbsafile=None, nt=1, outfile
 
 
 def main(args=None):
-    parser = argparse.ArgumentParser(description='GBSA Calculation.  Version: %s'%__version__)
-    parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', required=True)
-    parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
-    parser.add_argument('-c', dest='config', help='Configue file, default: %s'%DEFAULT_CONFIGURE_FILE, default=DEFAULT_CONFIGURE_FILE)
-    parser.add_argument('-d', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
+    parser = argparse.ArgumentParser(description='MM/GB(PB)SA Calculation.  Version: %s'%__version__)
+    parser.add_argument('-i', dest='receptor', help='Input protein file in pdb format.', required=True)
+    parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy for.', nargs='+', default=None)
+    parser.add_argument('-c', dest='config', help='Config file, default: %s'%DEFAULT_CONFIGURE_FILE, default=DEFAULT_CONFIGURE_FILE)
+    parser.add_argument('-d', dest='ligdir', help='Directory containing many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-f', dest='pbsafile', help='gmx_MMPBSA input file. default=None', default=None)
     parser.add_argument('-o', dest='outfile', help='Output file.', default='BindingEnergy.csv')
     parser.add_argument('-validate', help='Validate the ligand file. default: False', action='store_true', default=False)
-    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=multiprocessing.cpu_count())
+    parser.add_argument('-nt', dest='threads', help='Set number of threads to run this program.', type=int, default=multiprocessing.cpu_count())
     parser.add_argument('--decomp', help='Decompose the free energy. default:False', action='store_true', default=False)
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
     parser.add_argument('-v', '--version', action='version', version="{prog}s ({version})".format(prog="%(prog)", version=__version__))
 
     args = parser.parse_args(args)
-    receptor, ligands, conf, ligdir, outfile, decomposition, nt, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.decomp, args.thread, args.verbose
+    receptor, ligands, conf, ligdir, outfile, decomposition, nt, verbose = args.receptor, args.ligand, args.config, args.ligdir, args.outfile, args.decomp, args.threads, args.verbose
     
     if ligands is None:
         ligands = []
@@ -305,10 +305,10 @@ def main(args=None):
             if fileName.endswith(('mol','sdf')):
                 ligands.append(os.path.join(ligdir, fileName))
     if len(ligands)==0:
-        raise Exception('No ligands file found.')
+        raise Exception('No ligand files found.')
 
     if not os.path.exists(conf):
-        raise Exception("Not found the configure file! %s"%conf)
+        raise Exception("Could not find the config file! %s"%conf)
 
     mmpbsafile = os.path.abspath(args.pbsafile) if args.pbsafile else args.pbsafile
     paras = load_configue_file(conf)
