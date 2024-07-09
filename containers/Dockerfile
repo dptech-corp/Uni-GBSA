@@ -1,15 +1,13 @@
 FROM continuumio/miniconda3
 
-# 1. create a enverioment
+# 1. create an environment
 SHELL ["/bin/bash", "-c"]
-RUN conda create -n gbsa -c conda-forge acpype gromacs openmpi mpi4py \
-&&  echo -e 'conda activate gbsa' >> ~/.bashrc \
-&&  echo -e 'alias ls="ls --color" \n' >> ~/.bashrc \
+RUN conda create -n gbsa -c conda-forge acpype openmpi mpi4py gromacs "gmx_MMPBSA>=1.5.6" \
+&&  echo 'conda activate gbsa' >> ~/.bashrc \
 &&  rm -rf /opt/conda/pkgs/* 
 
-
-# 2. install Uni-GBSA
+# 2. install unigbsa
 RUN source ~/.bashrc \ 
-&&  pip install unigbsa gmx_MMPBSA>=1.5.6 lickit \
+&&  pip install unigbsa lickit \
 &&  rm -rf ~/.cache/*
 

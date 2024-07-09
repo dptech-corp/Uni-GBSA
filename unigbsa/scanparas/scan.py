@@ -28,10 +28,10 @@ def reres_gro(infile, outfile):
         raise Exception('Error convert %s to %s'%(infile, outfile))
     return outfile
 
-def thread_split(njob, nt):
-    thread = max([round(nt/njob), 1])
+def threads_split(njob, nt):
+    threads = max([round(nt/njob), 1])
     nt = njob if njob < nt else nt
-    return thread, nt
+    return threads, nt
 
 def load_scan_paras(jsonfile: str, scantype='fixed') -> dict:
     parasdict = {}
@@ -190,7 +190,7 @@ def build_topology_walker(arg):
     return ligandName, outfiles
 
 def build_topology_MPI(receptorfiles, ligandfiles, paras, outdir, nt=4):
-    thread, nworker = thread_split(len(ligandfiles), nt)
+    threads, nworker = threads_split(len(ligandfiles), nt)
     with PathManager(outdir) as pm:
         if isinstance(receptorfiles, str):
             receptor = build_protein(pm.abspath(receptorfiles, parent=True), forcefield=paras['simulation']['proteinforcefield'])
@@ -198,7 +198,7 @@ def build_topology_MPI(receptorfiles, ligandfiles, paras, outdir, nt=4):
         else:
             receptors = pm.abspath(receptorfiles, parent=True)
         ligandfiles = pm.abspath(ligandfiles, parent=True)
-        args = [ (receptor, ligandfile, paras, thread) for receptor, ligandfile in zip(receptors, ligandfiles) ]
+        args = [ (receptor, ligandfile, paras, threads) for receptor, ligandfile in zip(receptors, ligandfiles) ]
         with ProcessPoolExecutor(max_workers=nworker) as pool:
             outdict = { out[0]:out[1] for out in list(pool.map(build_topology_walker, args)) if out is not None }
     outparas = copy(paras)
@@ -206,7 +206,7 @@ def build_topology_MPI(receptorfiles, ligandfiles, paras, outdir, nt=4):
     return outparas
 
 def structural_optimization_walker(arg):
-    paras, ligandName, outdir, thread = arg
+    paras, ligandName, outdir, threads = arg
     paras = copy(paras)
     files = paras['files'][ligandName]
     simParas = paras['simulation']
@@ -220,7 +220,7 @@ def structural_optimization_walker(arg):
         engine = GMXEngine()
         if paras['simulation']['mode'] == 'em':
             GBSAInputfile = 'complex_minim.pdb'
-            minimgro, outtop = engine.run_to_minim(complexfile, topolfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=thread)
+            minimgro, outtop = engine.run_to_minim(complexfile, topolfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], maxsol=simParas['maxsol'], nt=threads)
             GBSAInputfile = reres_gro(minimgro, 'complex_minim.pdb')
             files['GBSAinput'] = pm.abspath(GBSAInputfile)
             files['GBSAtraj'] = pm.abspath(GBSAInputfile)
@@ -228,7 +228,7 @@ def structural_optimization_walker(arg):
             files['topolfile'] = pm.abspath('topol.top')
             engine.clean(pdbfile=complexfile)
         elif paras['simulation']['mode'] == 'md':
-            mdgro, mdxtc, outtop = engine.run_to_md(complexfile, topolfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nsteps=simParas['nsteps'], nframe=simParas['nframe'], eqsteps=simParas['eqsteps'], nt=thread)
+            mdgro, mdxtc, outtop = engine.run_to_md(complexfile, topolfile, boxtype=simParas['boxtype'], boxsize=simParas['boxsize'], conc=simParas['conc'], nsteps=simParas['nsteps'], nframe=simParas['nframe'], eqsteps=simParas['eqsteps'], nt=threads)
             GBSAInputfile = reres_gro(mdgro, 'complex_md.pdb')
             files['GBSAinput'] = pm.abspath(GBSAInputfile)
             files['GBSAtraj'] = pm.abspath('traj_comx.xtc')
@@ -248,8 +248,8 @@ def structural_optimization_walker(arg):
 
 def structural_optimization_MPI(paras, outdir=None, nt=4):
     ligandNames = paras['files'].keys()
-    thread, nworker = thread_split(len(ligandNames), nt)
-    args = [ (paras, ligandName, outdir, thread) for ligandName in ligandNames ]
+    threads, nworker = threads_split(len(ligandNames), nt)
+    args = [ (paras, ligandName, outdir, threads) for ligandName in ligandNames ]
     with ProcessPoolExecutor(max_workers=nworker) as pool:
         outfiles = { out[0]:out[1] for out in list(pool.map(structural_optimization_walker, args)) if out is not None }
     outparas = copy(paras)
@@ -257,7 +257,7 @@ def structural_optimization_MPI(paras, outdir=None, nt=4):
     return outparas
 
 def gbsa_calculation_walker(arg):
-    paras, ligandName, outdir, thread = arg
+    paras, ligandName, outdir, threads = arg
     files = paras['files'][ligandName]
     complexfile = files['complexfile']
     if outdir is None:
@@ -265,14 +265,14 @@ def gbsa_calculation_walker(arg):
     else:
         ligandir = os.path.join(outdir, ligandName)
     with PathManager(ligandir) as pm:
-        deltaG = traj_pipeline(files['GBSAinput'], trajfile=files['GBSAtraj'], topolfile=files['topolfile'], indexfile=files['indexfile'], pbsaParas=paras['GBSA'], mmpbsafile=None, nt=thread, verbose=False)
+        deltaG = traj_pipeline(files['GBSAinput'], trajfile=files['GBSAtraj'], topolfile=files['topolfile'], indexfile=files['indexfile'], pbsaParas=paras['GBSA'], mmpbsafile=None, nt=threads, verbose=False)
         deltaG['ligandName'] = ligandName
     return ligandName, deltaG
 
 def gbsa_calculation_MPI(paras, outdir, nt=4):
     ligandNames = paras['files'].keys()
-    thread, nworker = thread_split(len(ligandNames), nt)
-    args = [ (paras, ligandName, outdir, thread) for ligandName in ligandNames ]
+    threads, nworker = threads_split(len(ligandNames), nt)
+    args = [ (paras, ligandName, outdir, threads) for ligandName in ligandNames ]
     with ProcessPoolExecutor(max_workers=nworker) as pool:
         results = [ out for out in list(pool.map(gbsa_calculation_walker, args)) if out is not None ]
     df = None
@@ -303,6 +303,8 @@ def scan_parameters_v2(receptors, protdir, ligands, ligdir, expdatfile, parasfil
         ligands = []
     if receptors is None:
         receptors = []
+    if not isinstance(receptors, list):
+        receptors = [receptors]
     if protdir:
         for fileName in os.listdir(protdir):
             if fileName.endswith('.pdb'):
@@ -406,27 +408,27 @@ def scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, o
     print('The best para R2 is: %.4f'%R2max[1])
 
 class ParameterScan(object):
-    thread = 1
+    threads = 1
     paras = None
     def __init__(self) -> None:
         pass
 
 def main():
-    parser = argparse.ArgumentParser(description='GBSA Calculation.')
-    parser.add_argument('-i', dest='receptor', help='Input protein file with pdb format.', default=None)
-    parser.add_argument('-pd', dest='protdir', help='Floder contains many protein files. file format: .pdb', default=None)
+    parser = argparse.ArgumentParser(description='Perform an automatic parameter optimization prior to production MM/GB(PB)SA calculations.')
+    parser.add_argument('-i', dest='receptor', help='Input protein file in pdb format.', default=None)
+    parser.add_argument('-pd', dest='protdir', help='Directory containing many protein files. file format: .pdb', default=None)
     parser.add_argument('-l', dest='ligand', help='Ligand files to calculate binding energy.', nargs='+', default=None)
-    parser.add_argument('-ld', dest='ligdir', help='Floder contains many ligand files. file format: .mol or .sdf', default=None)
+    parser.add_argument('-ld', dest='ligdir', help='Directory containing many ligand files. file format: .mol or .sdf', default=None)
     parser.add_argument('-e', help='Experiment data file.', required=True)
     parser.add_argument('-c', dest='parasfile', help='Parameters to scan', required=True)
     parser.add_argument('-o', dest='outdir', help='Output directory.', default='pbsa.scan')
-    parser.add_argument('-nt', dest='thread', help='Set number of thread to run this program.', type=int, default=multiprocessing.cpu_count())
+    parser.add_argument('-nt', dest='threads', help='Set number of threads to run this program.', type=int, default=multiprocessing.cpu_count())
     parser.add_argument('--verbose', help='Keep all the files.', action='store_true', default=False)
 
     args = parser.parse_args()
-    receptor, protdir, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.protdir, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.thread
+    receptor, protdir, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt = args.receptor, args.protdir, args.ligand, args.ligdir, os.path.abspath(args.e), os.path.abspath(args.parasfile), args.verbose, args.outdir, args.threads
     # scan_parameters(receptor, ligands, ligdir, expdatfile, parasfile, verbose, outdir, nt)
-    if isinstance(receptor, str):
-        receptor = [receptor] * len(ligands)
+    #if isinstance(receptor, str):
+    #    receptor = [receptor] * len(ligands)
     scan_parameters_v2(receptor, protdir, ligands, ligdir, expdatfile, parasfile, outdir, nt=nt)
     
