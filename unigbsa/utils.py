@@ -1,7 +1,8 @@
-from email.policy import default
 import os
 import shutil
 import configparser
+
+import parmed as pmd
 from unigbsa.settings import logging, GMXEXE, DEFAULT_CONFIGURE_FILE
 
 def obtain_id_from_index(indexFile):
@@ -98,6 +99,67 @@ def generate_index_file(complexfile, pbc=False):
     os.system('rm \#*')
     indexfile = os.path.abspath('index.ndx')
     return indexfile
+
+
+def generate_index_file_from_topol(topolfile):
+    """
+    Generate index file for the complex file
+    Args:
+      complexfile: The name of the complex file.
+    Returns:
+      The index file is being returned.
+    """
+    structure_contents = []
+    with open(topolfile) as fr:
+        current_section = None
+        for line in fr:
+            line = line.strip()
+            if not line or line.startswith(';'):
+                continue
+            if line[0] == '[':
+                current_section = line[1:-1].strip()
+            elif current_section == 'molecules':
+                name, num = line.split()
+                num = int(num)
+                structure_contents.append((name, num))
+    top = pmd.load_file(topolfile)
+    atoms_dict = {
+        'System': [],
+        'output': [],
+        'Ions': [],
+        'Water': [],
+        'Water_and_ions': []
+    }
+    atom_index = 1
+    for i, (name, num) in enumerate(structure_contents):
+        molecule = top.molecules[name][0]
+        n_atoms = len(molecule.atoms) * num
+        indexs = list(range(atom_index, atom_index+n_atoms))
+        atom_index = atom_index + n_atoms
+        atoms_dict[name] = indexs
+        if i == 0:
+            atoms_dict['center'] = indexs
+        if name.startswith(('system', 'protein', 'MOL')):
+            atoms_dict['output'].extend(indexs)
+        elif name == 'SOL':
+            atoms_dict['Water'].extend(indexs)
+            atoms_dict['Water_and_ions'].extend(indexs)
+        elif name in ['NA', 'CL']:
+            atoms_dict['Ions'].extend(indexs)
+            atoms_dict['Water_and_ions'].extend(indexs)
+        atoms_dict['System'].extend(indexs)
+
+    with open('index.ndx', 'w') as fw:
+        for key, indexs in atoms_dict.items():
+            fw.write(f'\n[ {key} ]\n')
+            for i, index in enumerate(indexs):
+                if i != 0 and i % 15 == 0:
+                    fw.write('\n')
+                fw.write(str(index) + ' ')
+
+    indexfile = os.path.abspath('index.ndx')
+    return indexfile
+
 
 def process_pbc(trajfile, tprfile, indexfile, outfile=None, logfile="/dev/null"):
     fname = os.path.split(trajfile)[-1][:-4]

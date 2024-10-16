@@ -8,10 +8,12 @@ import warnings
 
 TEST_EM_CONFIG = os.path.dirname(os.path.abspath(__file__)) + '/config/em.ini'
 TEST_MD_CONFIG = os.path.dirname(os.path.abspath(__file__)) + '/config/md.ini'
+
+
 class TestPipline(unittest.TestCase):
     def setUpClass():
         warnings.simplefilter('ignore', ResourceWarning)
-        
+
     def base(self, pdbfile, ligandfile):
         pdbfile = os.path.abspath(pdbfile)
         ligandfile = os.path.abspath(ligandfile)
@@ -65,6 +67,10 @@ class TestPipline(unittest.TestCase):
         ligandfiles = ['../example/1ceb/1ceb_ligand.sdf']
         self.pipeline_md(pdbfile, ligandfiles)
 
+    def test_protein_protein(self):
+        pdbfile = '../example/protein-protein/1vf6_REC.pdb'
+        ligandfiles = ['../example/protein-protein/1vf6_LIG.pdb']
+        self.pipeline_minima(pdbfile, ligandfiles)
 
 if __name__ == "__main__":
     unittest.main()
