@@ -1,0 +1,4 @@
+Changes in Release 0.1.7
+--------------------------------------------------------------------------------
+* Uni-GBSA now support calculation for protein-protein complexes
+* Fix some code styles. 

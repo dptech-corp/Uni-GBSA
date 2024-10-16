@@ -496,3 +496,26 @@ def ligand_validate(sdfile, outfile=None):
             return outfile
     else:
         return sdfile
+
+
+def gen_index_for_gbsa(rec, lig, outfile='index.ndx'):
+    lig_atoms, rec_atoms = 0, 0
+    for key, (mol, _) in rec.molecules.items():
+        if key.startswith(('MOL', 'protein', 'system', 'Protein')):
+            rec_atoms += len(mol.atoms)
+    for key, (mol, _) in lig.molecules.items():
+        if key.startswith(('MOL', 'protein', 'system', 'Protein')):
+            lig_atoms += len(mol.atoms)
+
+    atom_dict = {
+        'System': (1, lig_atoms+rec_atoms+1),
+        'ligand': (1, lig_atoms+1),
+        'receptor': (lig_atoms+1, rec_atoms+lig_atoms+1)
+    }
+    with open(outfile, 'w') as fw:
+        for k, (s, e) in atom_dict.items():
+            fw.write(f'\n[ {k} ]\n')
+            for i, ndx in enumerate(range(s, e)):
+                fw.write(str(ndx) + ' ')
+                if i != 0 and i % 10 == 0:
+                    fw.write('\n')

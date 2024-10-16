@@ -1,7 +1,7 @@
 import os
 import shutil
 from unigbsa.settings import GMXEXE, MDPFILESDIR, OMP_NUM_THREADS
-from unigbsa.utils import generate_index_file, process_pbc
+from unigbsa.utils import generate_index_file_from_topol, process_pbc
 from unigbsa.simulation.utils import write_position_restrain
 
 class BaseObject(object):
@@ -447,21 +447,20 @@ class GMXEngine(BaseObject):
         cwd = os.getcwd()
         os.chdir(rundir)
         mdgro, mdxtc = self.gmx_md(nptpdb, topfile, mdpfile=os.path.join(MDPFILESDIR, 'md.mdp'), nsteps=nsteps, nframe=nframe, nt=nt)
-        indexfile = generate_index_file(mdgro, pbc=True)
+        indexfile = generate_index_file_from_topol(topfile)
         mdxtcpbc = process_pbc(mdxtc, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
         mdgropbc = process_pbc(mdgro, 'md.tpr', indexfile=indexfile, logfile=self.gmxlog)
         mdgro, mdxtc, topfile = os.path.abspath(mdgropbc), os.path.abspath(mdxtcpbc), os.path.abspath(topfile)
         os.chdir(cwd)
 
         return mdgro, mdxtc, topfile
-        
 
     def clean(self, pdbfile=None, rundir=None):
         """
         If you pass a directory
         to the function, it will delete the directory. If you don't pass a directory,
         it will delete the file
-        
+
         Args:
           pdbfile: the name of the PDB file to be cleaned
           rundir: the directory where the simulation will be run.

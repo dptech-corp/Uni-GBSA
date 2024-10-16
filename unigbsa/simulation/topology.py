@@ -10,7 +10,7 @@ from unigbsa.settings import GMXEXE, TEMPLATE_TOP
 from unigbsa.simulation.mdrun import GMXEngine
 from unigbsa.simulation.utils import convert_format, guess_filetype, fix_insertions
 from unigbsa.simulation.utils import assign_partial_charge, write_position_restrain
-from unigbsa.simulation.utils import obtain_net_charge
+from unigbsa.simulation.utils import obtain_net_charge, gen_index_for_gbsa
 
 def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="acpype", verbose=False, outtop=None, outcoord=None, molname='MOL', itpfile=None, sqm_opt=True, nt=1):
     """
@@ -31,7 +31,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
     ligandfile = os.path.abspath(ligandfile)
     ligandName = os.path.split(ligandfile)[-1][:-4]+'.TOP'
     filetype = guess_filetype(ligandfile)
-    acceptFileTypes = ('pdb', 'mol2', 'mol')
+    acceptFileTypes = ('mol2', 'mol')
     
     acpype_charge_methods = ['gas', 'bcc']
     if charge_method not in acpype_charge_methods:
@@ -39,7 +39,7 @@ def build_lignad(ligandfile, forcefield="gaff2", charge_method="bcc", engine="ac
         charge_method = 'user'
     elif filetype != 'mol':
         ligandfile = convert_format(ligandfile, filetype)
-    if not os.path.exists(ligandName): 
+    if not os.path.exists(ligandName):
         os.mkdir(ligandName)
     charge = obtain_net_charge(ligandfile)
     cwd = os.getcwd()
@@ -145,12 +145,12 @@ def build_protein_tleap(pdbfile, forcefield='', outtop=None, outcoor=None):
 def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=None):
     """
     Build a protein topology and coordinate file from a PDB file
-    
+
     Args:
       pdbfile: The name of the PDB file to be used as input.
       forcefield: The forcefield to use. Options are 'amber03', 'amber94', 'amber96', 'amber99',
     'amber99sb', 'amber99sb-ildn', 'amber99sb-star', 'amber14sb'. Defaults to amber99sb-ildn
-    
+
     Returns:
       a tuple of two objects: a topology object and a Structure object.
     """
@@ -177,7 +177,7 @@ def build_protein(pdbfile, forcefield='amber99sb-ildn', outtop=None, outcoord=No
         print(cmd)
         os.system('tail -n 50 gromacs.log')
         raise Exception('ERROR run gmx! see the log file for details %s'%os.path.abspath("gromacs.log"))
-    
+
     engine = GMXEngine()
     boxpdb = engine.gmx_box('1-pdb2gmx.gro', boxtype='triclinic', boxsize=0.9)
     #solpdb = engine.gmx_solvate(boxpdb, 'topol.top', maxsol=5)
@@ -214,9 +214,13 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
         prottop, protgro = build_protein(receptor, forcefield=proteinforce)
     else:
         prottop, protgro = receptor
-
+    indexfile = 'index.ndx'
     if isinstance(ligand, str):
-        moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, nt=nt, verbose=verbose)
+        if ligand.endswith('.pdb'):
+            moltop, molgro = build_protein(ligand, forcefield=proteinforce)
+            gen_index_for_gbsa(prottop, moltop, indexfile)
+        else:
+            moltop, molgro = build_lignad(ligand, forcefield=ligandforce, charge_method=charge_method, nt=nt, verbose=verbose)
     elif ligand:
         moltop, molgro = ligand
 
@@ -225,6 +229,7 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
     else:
         systop = moltop + prottop
         sysgro = molgro + protgro
+
     systop.write(outtop)
     sysgro.write_pdb(outpdb)
     newlines = []
@@ -260,8 +265,9 @@ def build_topol(receptor, ligand, outpdb, outtop, proteinforce='amber99sb-ildn',
                 for k,v in atomtypes.items():
                     if k not in mtypes:
                         fw.write(v+'\n')
-            
+
     write_position_restrain(outtop)
+    return indexfile
 
 def main():
     pdbfile, ligandfile = sys.argv[1], sys.argv[2]
