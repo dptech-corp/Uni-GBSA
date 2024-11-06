@@ -531,6 +531,7 @@ def gen_index_for_gbsa(rec, lig, outfile='index.ndx'):
         'ligand': (1, lig_atoms+1),
         'receptor': (lig_atoms+1, rec_atoms+lig_atoms+1)
     }
+
     logging.info(f"molecules in REC: {','.join(rec_keys)}")
     logging.info(f"molecules in LIG: {','.join(lig_keys)}")
 
