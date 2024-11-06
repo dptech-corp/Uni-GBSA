@@ -499,19 +499,41 @@ def ligand_validate(sdfile, outfile=None):
 
 
 def gen_index_for_gbsa(rec, lig, outfile='index.ndx'):
-    lig_atoms, rec_atoms = 0, 0
-    for key, (mol, _) in rec.molecules.items():
-        if key.startswith(('MOL', 'protein', 'system', 'Protein')):
-            rec_atoms += len(mol.atoms)
-    for key, (mol, _) in lig.molecules.items():
-        if key.startswith(('MOL', 'protein', 'system', 'Protein')):
-            lig_atoms += len(mol.atoms)
+    syscount = 1
+    lig_atoms, rec_atoms, sys_atoms = 0, 0, 0
+    lig_keys, rec_keys = [], []
+    except_resnames = ('SOL')
+    for mol, reslist in rec.split():
+        if len(mol.residues) == 1:
+            title = mol.residues[0].name if mol.residues[0].name.strip() else "UNK"
+        else:
+            title = f'Sgement-{syscount}'
+            syscount += 1
+        n_atoms = len(mol.atoms) * len(reslist)
+        if title not in except_resnames:
+            rec_atoms += n_atoms
+            rec_keys.append(title)
+        sys_atoms += n_atoms
+    for mol, reslist in lig.split():
+        if len(mol.residues) == 1:
+            title = mol.residues[0].name if mol.residues[0].name.strip() else "UNK"
+        else:
+            title = f'Sgement-{syscount}'
+            syscount += 1
+        n_atoms = len(mol.atoms) * len(reslist)
+        if title not in except_resnames:
+            lig_atoms += n_atoms
+            lig_keys.append(title)
+        sys_atoms += n_atoms
 
     atom_dict = {
         'System': (1, lig_atoms+rec_atoms+1),
         'ligand': (1, lig_atoms+1),
         'receptor': (lig_atoms+1, rec_atoms+lig_atoms+1)
     }
+    logging.info(f"molecules in REC: {','.join(rec_keys)}")
+    logging.info(f"molecules in LIG: {','.join(lig_keys)}")
+
     with open(outfile, 'w') as fw:
         for k, (s, e) in atom_dict.items():
             fw.write(f'\n[ {k} ]\n')
